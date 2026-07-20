@@ -1,14 +1,18 @@
-# 济南像素漫游（Jinan Pixel Walk）
+# Pixel City Walk｜像素漫游
 
 [![License: MIT](https://img.shields.io/badge/Code-MIT-2ea44f.svg)](./LICENSE)
 [![Artwork: CC BY 4.0](https://img.shields.io/badge/AI%20map-CC%20BY%204.0-8a63d2.svg)](./ASSET_LICENSES.md)
 [![No build step](https://img.shields.io/badge/build-none-f4c64f.svg)](#快速运行)
 
-一个由 AI 协助完成的非官方济南像素漫游网页小游戏。
+一个由 AI 协助完成的开源像素城市漫游网页游戏。
 
-玩家可以在抽象的济南像素世界中选择出发地点、控制人物游览、查看景点介绍、记录打卡路线，并生成带昵称的旅行纪念卡。
+它希望让任何人都能把自己的城市、景区、校园或园区做成一个可以行走、打卡、阅读故事并生成旅行纪念卡的像素世界。
 
-![济南像素世界总览](./assets/jinan-pixel-map.png)
+## 首个示例：泉城漫游记
+
+仓库当前自带济南示例。玩家可以在抽象的济南像素世界中选择出发地点、控制人物游览、查看景点介绍、记录打卡路线，并生成带昵称的旅行纪念卡。
+
+![泉城漫游记示例地图](./assets/jinan-pixel-map.png)
 
 ## 当前功能
 
@@ -40,7 +44,7 @@ http://127.0.0.1:8080/
 ## 项目结构
 
 ```text
-jinan-pixel-walk/
+    pixel-city-walk/
 ├── index.html
 ├── assets/
 │   ├── jinan-pixel-map.png
@@ -54,13 +58,13 @@ jinan-pixel-walk/
 
 ## 关于“原创”
 
-本项目参考了像素城市地图、城市漫游和数字集章等通用产品创意，但没有复制 8-Bit Cities、Isometric NYC 或其他城市地图项目的源码与美术素材。
+Pixel City Walk 参考了像素城市地图、城市漫游和数字集章等通用产品创意，但没有复制 8-Bit Cities、Isometric NYC 或其他城市地图项目的源码与美术素材。
 
 本仓库中的页面实现、交互流程、济南场景组织、打卡体验和旅行名片由项目作者在 AI 协助下独立完成。第三方角色素材与 AI 生成地图不属于“纯手工原创”，其来源和许可单独记录在 [ASSET_LICENSES.md](./ASSET_LICENSES.md)。
 
 ## 改造成其他城市
 
-当前版本是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
+当前 `v1.0.0` 是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
 
 1. `assets/jinan-pixel-map.png` 城市地图；
 2. `index.html` 中的区域和景点配置；
