@@ -1,0 +1,39 @@
+name: Bug 报告
+description: 报告可以稳定复现的问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: 感谢反馈。请勿在公开 Issue 中提交密码、Token、私人信息或未授权素材。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 实际发生了什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请提供最短、稳定的复现步骤。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 浏览器与设备
+      placeholder: 例如 Edge 版本、Windows 11；微信浏览器、iPhone 15
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 截图或补充信息

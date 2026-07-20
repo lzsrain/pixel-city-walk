@@ -1,0 +1,11 @@
+Pixel Character 02 - James (james.png)
+
+Author: Imogia Games
+Source: https://opengameart.org/content/pixel-character-02-james
+License: Creative Commons Zero (CC0 1.0 Universal)
+License URL: https://creativecommons.org/publicdomain/zero/1.0/
+
+This is a derivative work of Frozenen's Random Pixel Characters. The source
+page describes an 8-row, four-frame animation sheet with idle, front walk,
+back walk, side walk and additional actions. Attribution is not required,
+but the prototype keeps the author and source visible for provenance.

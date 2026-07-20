@@ -1,0 +1,23 @@
+name: 功能建议
+description: 提议新的玩法、城市适配或体验改进
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 使用场景
+      description: 谁会在什么情况下使用这个功能？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+    validations:
+      required: true
+  - type: textarea
+    id: assets
+    attributes:
+      label: 素材与许可
+      description: 如果涉及地图、图片、字体或音效，请提供来源和许可证。
