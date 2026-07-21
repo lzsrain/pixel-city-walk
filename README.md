@@ -48,6 +48,7 @@ http://127.0.0.1:8080/
 ├── index.html
 ├── assets/
 │   ├── jinan-pixel-map.png
+│   ├── jinan-travel-ticket-base.png
 │   └── character/
 │       ├── james.png
 │       └── LICENSE.txt
@@ -67,7 +68,7 @@ Pixel City Walk 参考了像素城市地图、城市漫游和数字集章等通�
 
 当前版本是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
 
-1. `assets/jinan-pixel-map.png` 城市地图；
+1. `assets/jinan-pixel-map.png` 城市地图和 `assets/jinan-travel-ticket-base.png` 旅行票根；
 2. `index.html` 中的区域和景点配置；
 3. 城市名称、NPC 文案和像素明信片文字；
 4. 主题颜色与城市标识。

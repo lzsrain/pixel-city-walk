@@ -14,6 +14,18 @@
 
 在项目作者依法享有相关权利的范围内，允许复制、修改、再发布和商业使用该地图，但须按 CC BY 4.0 提供合理署名、许可证链接，并标明是否修改。不得声称该地图为济南官方地图，不得暗示济南市政府、景区或 OpenAI 对衍生项目提供背书。该图片可能与其他生成输出存在相似之处，使用者应自行评估具体使用场景、当地法律及第三方权利风险。
 
+## 济南旅行票根明信片
+
+- 文件：`assets/jinan-travel-ticket-base.png`
+- 类型：AI 生成的济南旅行纪念票根插画
+- 生成工具：OpenAI `gpt-image 2.0`
+- 用途：玩家结束漫游后的固定下载底图
+- 使用范围：济南景点的非官方、艺术化相对方位表达
+- 许可：[Creative Commons Attribution 4.0 International（CC BY 4.0）](https://creativecommons.org/licenses/by/4.0/)
+- 建议署名：`Jinan travel ticket artwork by Kairo, generated with OpenAI gpt-image 2.0, CC BY 4.0`
+
+该插画中的景点比例、街道和水系经过艺术化处理，不应用于现实导航。用于其他城市时，建议按照 `CITY_CUSTOMIZATION_GUIDE.md` 重新核对景点相对方位并生成自己的票根底图。
+
 ## James 像素角色
 
 - 文件：`assets/character/james.png`
