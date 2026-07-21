@@ -22,7 +22,7 @@
 - NPC 新手引导
 - 景点介绍与旅行手账
 - 本地浏览器进度保存
-- 旅行名片生成与 PNG 下载
+- 16:9 像素旅行明信片生成与 PNG 下载
 - 桌面端和移动端适配
 
 ## 快速运行
@@ -52,6 +52,7 @@ http://127.0.0.1:8080/
 │       ├── james.png
 │       └── LICENSE.txt
 ├── ASSET_LICENSES.md
+├── CITY_CUSTOMIZATION_GUIDE.md
 ├── LICENSE
 └── README.md
 ```
@@ -64,14 +65,16 @@ Pixel City Walk 参考了像素城市地图、城市漫游和数字集章等通�
 
 ## 改造成其他城市
 
-当前 `v1.0.0` 是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
+当前版本是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
 
 1. `assets/jinan-pixel-map.png` 城市地图；
 2. `index.html` 中的区域和景点配置；
-3. 城市名称、NPC 文案和旅行名片文字；
+3. 城市名称、NPC 文案和像素明信片文字；
 4. 主题颜色与城市标识。
 
 后续计划将城市内容拆成独立 JSON 内容包，让创建新城市时无需修改游戏引擎代码。
+
+如果你不会写代码，可以直接阅读 [《用 AI 把示例改成你的城市》](./CITY_CUSTOMIZATION_GUIDE.md)。里面提供了可复制给 Codex、WorkBuddy、ZCode、Hermes 或 OpenClaw 的完整提示词，包括城市资料核对、固定景点坐标、地图生图、票根视觉和发布前检查。
 
 ## 许可
 
