@@ -44,19 +44,30 @@ http://127.0.0.1:8080/
 ## 项目结构
 
 ```text
-    pixel-city-walk/
-├── index.html
+pixel-city-walk/
+├── index.html                 # HTML 骨架，引用外部 CSS/JS
+├── css/
+│   └── style.css              # 全部样式
+├── js/
+│   └── engine.js              # 引擎逻辑（城市无关，只读取 city.json）
+├── cities/
+│   └── jinan/
+│       ├── city.json          # 济南专属数据（区域、景点、坐标、NPC、配色、文案）
+│       ├── map.png            # 城市像素地图
+│       └── ticket-base.png    # 旅行票根底图
 ├── assets/
-│   ├── jinan-pixel-map.png
-│   ├── jinan-travel-ticket-base.png
 │   └── character/
-│       ├── james.png
+│       ├── james.png          # 玩家精灵（通用，不随城市变化）
 │       └── LICENSE.txt
 ├── ASSET_LICENSES.md
 ├── CITY_CUSTOMIZATION_GUIDE.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
 ├── LICENSE
 └── README.md
 ```
+
+引擎与城市内容已分离：`js/engine.js` 不含任何城市专属数据，所有区域、景点、坐标、NPC 文案、配色和 UI 文本都由 `cities/<城市>/city.json` 提供。换城市时只需新建一个 `cities/<城市>/` 目录并修改其中的 `city.json` 与图片，无需改动引擎代码。
 
 ## 关于“原创”
 
@@ -66,14 +77,14 @@ Pixel City Walk 参考了像素城市地图、城市漫游和数字集章等通�
 
 ## 改造成其他城市
 
-当前版本是济南示例，城市名称、区域坐标、景点介绍和视觉内容仍位于 `index.html` 中。你可以替换：
+当前版本已将城市内容从引擎代码中拆出。要创建自己的城市，只需要：
 
-1. `assets/jinan-pixel-map.png` 城市地图和 `assets/jinan-travel-ticket-base.png` 旅行票根；
-2. `index.html` 中的区域和景点配置；
-3. 城市名称、NPC 文案和像素明信片文字；
-4. 主题颜色与城市标识。
+1. 复制 `cities/jinan/` 目录为 `cities/你的城市名/`；
+2. 修改其中的 `city.json`：城市名、区域坐标、景点介绍、NPC 文案、配色和 UI 文本；
+3. 替换 `map.png`（城市地图）和 `ticket-base.png`（旅行票根底图）；
+4. 在浏览器访问 `http://127.0.0.1:8080/?city=你的城市名` 即可加载。
 
-后续计划将城市内容拆成独立 JSON 内容包，让创建新城市时无需修改游戏引擎代码。
+引擎代码（`js/engine.js`）不需要改动。`city.json` 中的 `world`、`player`、`camera`、`theme`、`npc`、`zones`、`ui` 等字段决定了游戏的所有内容和外观。
 
 如果你不会写代码，可以直接阅读 [《用 AI 把示例改成你的城市》](./CITY_CUSTOMIZATION_GUIDE.md)。里面提供了可复制给 Codex、WorkBuddy、ZCode、Hermes 或 OpenClaw 的完整提示词，包括城市资料核对、固定景点坐标、地图生图、票根视觉和发布前检查。
 

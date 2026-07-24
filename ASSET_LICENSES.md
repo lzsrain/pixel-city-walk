@@ -4,7 +4,7 @@
 
 ## 济南像素地图
 
-- 文件：`assets/jinan-pixel-map.png`
+- 文件：`cities/jinan/map.png`
 - 类型：AI 生成内容，经项目作者选择并用于抽象游戏地图
 - 生成工具：OpenAI `gpt-image 2.0`
 - 来源证据：原始 PNG 内嵌 C2PA 内容凭证，标记 `trainedAlgorithmicMedia` 与 `OpenAI Media Service API`
@@ -16,7 +16,7 @@
 
 ## 济南旅行票根明信片
 
-- 文件：`assets/jinan-travel-ticket-base.png`
+- 文件：`cities/jinan/ticket-base.png`
 - 类型：AI 生成的济南旅行纪念票根插画
 - 生成工具：OpenAI `gpt-image 2.0`
 - 用途：玩家结束漫游后的固定下载底图
