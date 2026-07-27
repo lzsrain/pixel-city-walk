@@ -51,9 +51,13 @@
     set('--ink',t.ink);set('--paper',t.paper);set('--deep',t.deep);
     set('--jade',t.jade);set('--mint',t.mint);set('--gold',t.gold);
     set('--red',t.red);set('--water',t.water);
-    // CSS background-image variables (must be url(...) strings)
-    set('--city-map-url',`url('${c.assets.map}')`);
-    set('--sprite-url',`url('${c.assets.sprite}')`);
+    // CSS background-image variables (must be url(...) strings).
+    // Resolve to absolute URLs: when a stylesheet rule consumes these vars,
+    // relative paths would otherwise resolve against the stylesheet's base
+    // (e.g. /css/), which 404s. Absolute URLs are immune to that.
+    const absUrl=p=>new URL(p,document.baseURI).href;
+    set('--city-map-url',`url('${absUrl(c.assets.map)}')`);
+    set('--sprite-url',`url('${absUrl(c.assets.sprite)}')`);
 
     // NPC sprite filter
     const npcSprite=document.querySelector('.npc-sprite');
@@ -77,6 +81,23 @@
   const $=s=>document.querySelector(s);
   const fmt=(tpl,name)=>tpl.replace(/\{name\}/g,name);
   const themeColor=(k,fallback)=>city?city.theme[k]||fallback:fallback;
+
+  /* ---- progress persistence (per city) ---- */
+  let saveKey='pcw';
+  function saveProgress(){
+    try{
+      localStorage.setItem(saveKey,JSON.stringify({v:1,name:playerName,visited:[...visited],route:[...route],steps:Math.floor(player.steps)}));
+    }catch(e){/* private mode / storage disabled: play without saving */}
+  }
+  function loadProgress(){
+    try{
+      const raw=localStorage.getItem(saveKey);
+      if(!raw)return null;
+      const s=JSON.parse(raw);
+      return s&&s.v===1&&typeof s.name==='string'?s:null;
+    }catch(e){return null}
+  }
+  function clearProgress(){try{localStorage.removeItem(saveKey)}catch(e){}}
 
   /* ---- map transforms ---- */
   function clampMapPosition(){const maxX=Math.max(0,(mapCanvas.offsetWidth*mapScale-mapViewport.clientWidth)/2),maxY=Math.max(0,(mapCanvas.offsetHeight*mapScale-mapViewport.clientHeight)/2);mapX=Math.max(-maxX,Math.min(maxX,mapX));mapY=Math.max(-maxY,Math.min(maxY,mapY))}
@@ -138,7 +159,7 @@
   }
 
   function nearestZoneId(x,y){return Object.entries(zones).reduce((best,[id,z])=>{const distance=(z.x-x)**2+(z.y-y)**2;return distance<best.distance?{id,distance}:best},{id:null,distance:Infinity}).id}
-  function setCurrentZone(id,record=true){if(!id||!zones[id])return;currentZone=id;const z=zones[id];$('#zoneName').textContent=z.name;$('#zoneIcon').textContent=z.icon;if(record&&route.at(-1)!==id)route.push(id)}
+  function setCurrentZone(id,record=true){if(!id||!zones[id])return;currentZone=id;const z=zones[id];$('#zoneName').textContent=z.name;$('#zoneIcon').textContent=z.icon;if(record&&route.at(-1)!==id){route.push(id);saveProgress()}}
   function enterZone(id){const z=zones[id];let tx=z.x,ty=z.y;if(inWater(tx,ty)){for(let r=20;r<200;r+=10){for(let a=0;a<360;a+=45){const rx=tx+Math.cos(a*Math.PI/180)*r,ry=ty+Math.sin(a*Math.PI/180)*r;if(!inWater(rx,ry)){tx=rx;ty=ry;break}}if(!inWater(tx,ty))break}}player.x=tx;player.y=ty;player.target=null;if(route.length===0)player.steps=0;player.dir='down';camera.x=tx-canvas.clientWidth/camera.zoom/2;camera.y=ty-canvas.clientHeight/camera.zoom/2;setCurrentZone(id,true);overview.classList.add('hidden');$('#back').hidden=false;$('#finishTrip').hidden=false;canvas.focus();draw()}
   function showOverview(){overview.classList.remove('hidden');currentZone=null;player.target=null;nearScene=null;$('#back').hidden=true;$('#finishTrip').hidden=route.length===0;$('#zoneName').textContent=city.ui.zoneWaitName;$('#zoneIcon').textContent=city.ui.zoneWaitIcon}
 
@@ -212,6 +233,66 @@
   /* ---- postcard ---- */
   function collectedSceneNames(){return [...visited].map(key=>{const [zoneId,index]=key.split(':');return zones[zoneId]?.scenes[Number(index)]?.name}).filter(Boolean)}
 
+  // Substitute {name}/{date}/{zones}/{finds}/{route}/{steps}/{city} tokens
+  // in postcard overlay templates. All copy comes from city.json.
+  function overlayText(tpl,data){return tpl.replace(/\{(\w+)\}/g,(_,k)=>data[k]??'')}
+
+  // Fit text into maxWidth by shrinking the px size of the configured font.
+  function fitText(g,text,font,maxWidth){
+    const m=font.match(/(\d+(?:\.\d+)?)px/);
+    if(!m)return font;
+    let size=parseFloat(m[1]);
+    g.font=font;
+    while(size>10&&g.measureText(text).width>maxWidth){
+      size-=1;g.font=font.replace(/\d+(?:\.\d+)?px/,size+'px');
+    }
+    return g.font;
+  }
+
+  function drawCardOverlay(g,card,uniqueZones,finds){
+    const o=city.postcard.overlay;
+    if(!o)return;
+    const today=new Date();
+    const mm=String(today.getMonth()+1).padStart(2,'0'),dd=String(today.getDate()).padStart(2,'0');
+    const data={
+      name:playerName,
+      city:city.name,
+      date:`${today.getFullYear()}-${mm}-${dd}`,
+      mmdd:mm+dd,
+      zones:uniqueZones.length,
+      finds:finds.length,
+      steps:Math.floor(player.steps),
+      route:uniqueZones.map(id=>zones[id].name).join(' → ')
+    };
+    // caption band
+    if(o.panel){
+      const p=o.panel;
+      g.save();
+      g.fillStyle=p.bg;g.strokeStyle=p.border;g.lineWidth=p.borderWidth||3;
+      if(g.roundRect){g.beginPath();g.roundRect(p.x,p.y,p.w,p.h,p.radius||14);g.fill();g.stroke()}
+      else{g.fillRect(p.x,p.y,p.w,p.h);g.strokeRect(p.x,p.y,p.w,p.h)}
+      g.restore();
+    }
+    g.save();
+    g.textAlign='left';g.textBaseline='alphabetic';
+    (o.lines||[]).forEach(line=>{
+      const text=overlayText(line.text,data);
+      if(!text.trim())return;
+      g.fillStyle=line.color;
+      if('letterSpacing' in g)g.letterSpacing=line.letterSpacing||'0px';
+      g.font=line.maxWidth?fitText(g,text,line.font,line.maxWidth):line.font;
+      if(line.align)g.textAlign=line.align;else g.textAlign='left';
+      g.fillText(text,line.x,line.y);
+    });
+    if('letterSpacing' in g)g.letterSpacing='0px';
+    if(o.footer){
+      const f=o.footer;
+      g.fillStyle=f.color;g.font=f.font;g.textAlign=f.align||'center';
+      g.fillText(overlayText(f.text,data),f.x,f.y);
+    }
+    g.restore();
+  }
+
   function drawTravelCard(){
     const card=$('#travelCard'),g=card.getContext('2d');
     const uniqueZones=[...new Set(route)].filter(id=>zones[id]),finds=collectedSceneNames();
@@ -224,13 +305,14 @@
       g.font='800 34px "Microsoft YaHei",sans-serif';
       g.fillText(city.postcard.loadingText,card.width/2,card.height/2);
     }
+    drawCardOverlay(g,card,uniqueZones,finds);
     $('#resultTitle').textContent=fmt(city.ui.resultTitle,playerName);
     $('#resultZones').textContent=uniqueZones.length;
     $('#resultFinds').textContent=finds.length;
     return card
   }
 
-  async function finishTrip(){keys.clear();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});drawTravelCard();$('#tripEnd').classList.add('open')}
+  async function finishTrip(){keys.clear();saveProgress();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});drawTravelCard();$('#tripEnd').classList.add('open')}
 
   /* ---- guide ---- */
   function renderGuide(){
@@ -262,7 +344,7 @@
 
     document.querySelectorAll('.dpad button').forEach(b=>{const k=b.dataset.key;b.onpointerdown=e=>{e.preventDefault();keys.add(k);player.target=null};b.onpointerup=b.onpointercancel=b.onpointerleave=()=>keys.delete(k)});
 
-    $('#nameForm').onsubmit=e=>{e.preventDefault();playerName=$('#playerName').value.trim()||'旅行者';$('#nameStep').hidden=true;$('#guideStep').hidden=false;$('#playerGreeting').textContent=playerName+city.ui.greetingSuffix;$('#mapWelcome').textContent=fmt(city.ui.mapWaitTitle,playerName);renderGuide()};
+    $('#nameForm').onsubmit=e=>{e.preventDefault();playerName=$('#playerName').value.trim()||'旅行者';$('#nameStep').hidden=true;$('#guideStep').hidden=false;$('#playerGreeting').textContent=playerName+city.ui.greetingSuffix;$('#mapWelcome').textContent=fmt(city.ui.mapWaitTitle,playerName);saveProgress();renderGuide()};
 
     const portraitPhone=matchMedia('(max-width:850px) and (orientation:portrait)');
     function beginMapExperience(){$('#rotateHint').classList.remove('open');if(portraitPhone.matches)setMapZoom(1.5);else resetMapView();setTimeout(()=>{fit();canvas.focus()},80)}
@@ -278,7 +360,7 @@
     $('#look').onclick=()=>openScene(nearScene);
     $('#close').onclick=()=>$('#story').classList.remove('open');
     $('#story').onclick=e=>{if(e.target.id==='story')$('#story').classList.remove('open')};
-    $('#collect').onclick=()=>{if(activeScene===null)return;visited.add(currentZone+':'+activeScene);$('#collect').textContent=city.ui.collectedLabel};
+    $('#collect').onclick=()=>{if(activeScene===null)return;visited.add(currentZone+':'+activeScene);$('#collect').textContent=city.ui.collectedLabel;saveProgress()};
 
     addEventListener('resize',()=>{fit();draw();applyMapTransform()});
 
@@ -326,9 +408,36 @@
       $('#rotateText').textContent=ui.rotateText;
       $('#continuePortrait').textContent=ui.rotateButton;
 
+      saveKey=`pcw:${cityId}`;
+
+      // reset button: clears saved progress and restarts
+      const resetBtn=$('#resetTrip');
+      if(resetBtn){
+        resetBtn.textContent=ui.resetLabel||resetBtn.textContent;
+        resetBtn.onclick=()=>{clearProgress();location.reload()};
+      }
+
+      // restore saved progress: returning players skip onboarding
+      const saved=loadProgress();
+      if(saved){
+        playerName=saved.name;
+        (saved.visited||[]).forEach(k=>typeof k==='string'&&visited.add(k));
+        (saved.route||[]).forEach(id=>{if(zones[id]&&route.at(-1)!==id)route.push(id)});
+        player.steps=saved.steps||0;
+        $('#steps').textContent=Math.floor(player.steps);
+        $('#playerGreeting').textContent=playerName+ui.greetingSuffix;
+        $('#mapWelcome').textContent=fmt(ui.mapWaitTitle,playerName);
+        onboarding.classList.remove('open');
+        if(resetBtn)resetBtn.hidden=false;
+      }
+
       buildPins();
       bindEvents();
-      setTimeout(()=>$('#playerName').focus(),120);
+      if(saved){
+        if(matchMedia('(max-width:850px) and (orientation:portrait)').matches)setMapZoom(1.5);
+      }else{
+        setTimeout(()=>$('#playerName').focus(),120);
+      }
     }catch(err){
       // fetch failed — likely opened via file:// without a static server
       const warn=document.querySelector('#serverWarning');

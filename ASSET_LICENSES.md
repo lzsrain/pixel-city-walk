@@ -17,12 +17,13 @@
 ## 济南旅行票根明信片
 
 - 文件：`cities/jinan/ticket-base.png`
-- 类型：AI 生成的济南旅行纪念票根插画
+- 类型：AI 生成的济南旅行纪念票根插画（经项目修改，见下）
 - 生成工具：OpenAI `gpt-image 2.0`
 - 用途：玩家结束漫游后的固定下载底图
 - 使用范围：济南景点的非官方、艺术化相对方位表达
 - 许可：[Creative Commons Attribution 4.0 International（CC BY 4.0）](https://creativecommons.org/licenses/by/4.0/)
 - 建议署名：`Jinan travel ticket artwork by Kairo, generated with OpenAI gpt-image 2.0, CC BY 4.0`
+- 修改说明（依 CC BY 4.0 标明修改）：2026-07-27 由项目在 AI 协助下对原始成图做了图像修复处理，移除了右侧票根上原本画死的编号"0721"、副标题"我的泉城足迹"、日期"2026-07-21"和"宜：看泉 忌：赶路"文字，相应区域按周围奶油纸张的颜色与颗粒纹理修复为留白；印章、"济南漫游"标题、指南针、荷花、英文与条码等装饰未改动。留白区域的文字改由游戏引擎按 `cities/jinan/city.json` 的 `postcard.overlay` 配置在运行时动态绘制。
 
 该插画中的景点比例、街道和水系经过艺术化处理，不应用于现实导航。用于其他城市时，建议按照 `CITY_CUSTOMIZATION_GUIDE.md` 重新核对景点相对方位并生成自己的票根底图。
 
