@@ -3,10 +3,23 @@
 [![License: MIT](https://img.shields.io/badge/Code-MIT-2ea44f.svg)](./LICENSE)
 [![Artwork: CC BY 4.0](https://img.shields.io/badge/AI%20map-CC%20BY%204.0-8a63d2.svg)](./ASSET_LICENSES.md)
 [![No build step](https://img.shields.io/badge/build-none-f4c64f.svg)](#快速运行)
+[![Live Demo](https://img.shields.io/badge/在线试玩-泉城漫游记-d85b44.svg)](https://jinan.airo.siphot.com/)
+[![GitHub stars](https://img.shields.io/github/stars/lzsrain/pixel-city-walk?style=social)](https://github.com/lzsrain/pixel-city-walk/stargazers)
 
 一个由 AI 协助完成的开源像素城市漫游网页游戏。
 
 它希望让任何人都能把自己的城市、景区、校园或园区做成一个可以行走、打卡、阅读故事并生成旅行纪念卡的像素世界。
+
+> 🎮 **[立即在线试玩济南示例](https://jinan.airo.siphot.com/)** · ⭐ **[觉得有趣，欢迎点个 Star](https://github.com/lzsrain/pixel-city-walk)** · 🏙️ **[用 AI 改成你的城市](./CITY_CUSTOMIZATION_GUIDE.md)**
+
+Build a walkable pixel world for any city, campus, scenic area or community — no backend and no build step required.
+
+## 30 秒体验
+
+1. 输入你的名字，从一处济南景点出发；
+2. 用键盘、鼠标或触屏控制人物游览；
+3. 查看景点故事，把喜欢的风景收进旅行手账；
+4. 结束漫游，生成并下载带昵称、路线和当天日期的旅行明信片。
 
 ## 首个示例：泉城漫游记
 
@@ -21,7 +34,7 @@
 - 千佛山、趵突泉、大明湖、泉城广场、黑虎泉与护城河等区域
 - NPC 新手引导
 - 景点介绍与旅行手账
-- 本地浏览器进度保存（昵称、路线、手账自动保存，老玩家跳过引导，可随时"重新开始"）
+- 本地浏览器进度保存（昵称、路线、手账自动保存，老玩家跳过引导并可重新开始）
 - 16:9 像素旅行明信片生成与 PNG 下载（票面绘制昵称、日期、漫游路线与统计）
 - 桌面端和移动端适配
 
