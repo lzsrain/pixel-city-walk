@@ -15,7 +15,7 @@
         <div class="brand">
           <div class="brandmark">泉</div>
           <div>
-            <b>泉城漫游记</b>
+            <b id="headerTitle">泉城漫游记</b>
             <small id="playerGreeting">一个抽象的济南像素世界</small>
           </div>
         </div>
@@ -30,14 +30,14 @@
         <div class="scanlines"></div>
         <div class="hud">
           <div class="hud-line">
-            <div><small>当前地点</small><br><strong id="zoneName">等待出发</strong></div>
+            <div><small id="hudPlaceLabel">当前地点</small><br><strong id="zoneName">等待出发</strong></div>
             <span id="zoneIcon" style="font-size:27px">🗺️</span>
           </div>
-          <div class="hud-state"><span id="walkState">站立</span> · <b id="steps">0</b> 步 · 帧 <b id="frameNo">1</b>/4</div>
+          <div class="hud-state"><span id="walkState">站立</span> · <b id="steps">0</b> <span id="stepsUnit">步</span> · <span id="frameUnit">帧</span> <b id="frameNo">1</b>/4</div>
         </div>
         <div class="hint">
-          <span class="desktop-control">点击地面 / WASD / 方向键移动</span>
-          <span class="mobile-control">点闪光景点，直接查看介绍</span>
+          <span class="desktop-control" id="desktopHint">点击地面 / WASD / 方向键移动</span>
+          <span class="mobile-control" id="mobileHint">点闪光景点，直接查看介绍</span>
         </div>
         <div id="prompt" class="prompt">
           <kbd class="desktop-control">E</kbd><span id="promptLabel">查看景点介绍</span>

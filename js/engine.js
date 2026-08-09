@@ -188,10 +188,10 @@
       if(Math.abs(dx)>Math.abs(dy))player.dir=dx<0?'left':'right';else if(dy!==0)player.dir=dy<0?'up':'down';
       const nextZone=nearestZoneId(player.x,player.y);
       if(nextZone!==currentZone)setCurrentZone(nextZone,true);
-      $('#walkState').textContent='行走中';$('#steps').textContent=Math.floor(player.steps);$('#frameNo').textContent=player.frame+1
+      $('#walkState').textContent=(city.ui.walkingLabel||'行走中');$('#steps').textContent=Math.floor(player.steps);$('#frameNo').textContent=player.frame+1
     }else{
       player.anim=0;player.frame=0;
-      $('#walkState').textContent='站立';$('#frameNo').textContent='1'
+      $('#walkState').textContent=(city.ui.standingLabel||'站立');$('#frameNo').textContent='1'
     }
     const vw=canvas.clientWidth/camera.zoom,vh=canvas.clientHeight/camera.zoom;
     const tx=player.x-vw/2,ty=player.y-vh/2;
@@ -407,6 +407,17 @@
       $('#rotateTitle').textContent=ui.rotateTitle;
       $('#rotateText').textContent=ui.rotateText;
       $('#continuePortrait').textContent=ui.rotateButton;
+      // City-agnostic UI strings that used to be baked into index.html.
+      // Each falls back to the markup's existing text, so a city.json that
+      // omits them behaves exactly as before.
+      const setText=(sel,v)=>{const el=$(sel);if(el&&v)el.textContent=v};
+      setText('#headerTitle',c.subtitle);
+      setText('#hudPlaceLabel',ui.hudPlaceLabel);
+      setText('#stepsUnit',ui.stepsUnit);
+      setText('#frameUnit',ui.frameUnit);
+      setText('#desktopHint',ui.desktopHint);
+      setText('#mobileHint',ui.mobileHint);
+      setText('#guideKicker',c.npc.guideKicker);
 
       saveKey=`pcw:${cityId}`;
 
