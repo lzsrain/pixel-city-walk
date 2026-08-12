@@ -22,6 +22,7 @@
         <div class="top-actions">
           <button id="resetTrip" hidden>↺ 重新开始</button>
           <button id="back" hidden>◎ 返回世界地图</button>
+          <button id="openJournal">手账 <b id="journalCount">0</b>/<span id="journalTotal">0</span></button>
           <button id="finishTrip" hidden>✓ 结束漫游</button>
         </div>
       </header>
@@ -33,7 +34,7 @@
             <div><small>当前地点</small><br><strong id="zoneName">等待出发</strong></div>
             <span id="zoneIcon" style="font-size:27px">🗺️</span>
           </div>
-          <div class="hud-state"><span id="walkState">站立</span> · <b id="steps">0</b> 步 · 帧 <b id="frameNo">1</b>/4</div>
+          <div class="hud-state"><span id="nextTarget">先选一条路线</span> · <b id="zoneProgress">0/0</b></div>
         </div>
         <div class="hint">
           <span class="desktop-control">点击地面 / WASD / 方向键移动</span>
@@ -59,7 +60,19 @@
           <div class="map-title">
             <small id="mapWaitKicker">泉宝正在等你出发</small>
             <h1 id="mapWelcome">今天从哪里开始逛？</h1>
-            <p id="mapWaitHint">点击黄色地标；放大后可拖动地图查看细节。</p>
+            <p id="mapWaitHint">先选一条路线，也可以随便逛。</p>
+          </div>
+          <div class="route-picker" aria-label="选择漫游路线">
+            <button class="route-card selected" data-route="first">
+              <span>推荐</span><b>第一次来</b><small>趵突泉 → 泉城广场 → 黑虎泉 · 约 5 分钟</small>
+            </button>
+            <button class="route-card" data-route="lake">
+              <span>轻松</span><b>湖边慢走</b><small>大明湖 → 老城 · 约 3 分钟</small>
+            </button>
+            <button class="route-card" data-route="free">
+              <span>自由</span><b>随便逛</b><small>自己决定下一站</small>
+            </button>
+            <button id="startRoute" class="route-start">从趵突泉出发</button>
           </div>
           <div class="map-controls" aria-label="地图缩放">
             <button id="mapZoomOut" aria-label="缩小地图">−</button>
@@ -73,28 +86,14 @@
   </main>
 
   <section id="onboarding" class="onboarding open" aria-modal="true" role="dialog">
-    <article class="intro-card">
-      <div class="npc-panel">
-        <div class="npc-sprite" aria-hidden="true"></div>
-        <div><b id="npcName">泉宝</b><br><span id="npcRole">你的泉城向导</span></div>
-      </div>
-      <div class="intro-copy">
-        <div id="nameStep">
-          <small id="welcomeKicker">欢迎来到泉城</small>
-          <h1 id="welcomeTitle">你好，我是泉宝。<br>先告诉我你叫什么？</h1>
-          <p id="welcomeText">我会陪你走进这张济南像素地图，发现泉水、老街和湖边的故事。</p>
-          <form id="nameForm" class="name-form">
-            <input id="playerName" maxlength="12" autocomplete="nickname" placeholder="输入你的名字" aria-label="你的名字" required>
-            <button class="primary" type="submit" id="nameSubmit">认识一下</button>
-          </form>
-        </div>
-        <div id="guideStep" hidden>
-          <small id="guideKicker">泉宝的话</small>
-          <h1 id="guideTitle"></h1>
-          <p id="guideText"></p>
-          <div id="guideProgress" class="guide-progress"></div>
-          <div class="guide-actions"><button id="guideNext" class="primary" type="button">继续</button></div>
-        </div>
+    <article class="launch-card">
+      <div class="launch-map" aria-hidden="true"><div class="launch-sprite"></div><i></i><i></i><i></i></div>
+      <div class="launch-copy">
+        <small>PIXEL CITY WALK · JINAN</small>
+        <h1>在像素济南<br>散个步</h1>
+        <p>逛景点、盖印章，最后生成一张真正记录你路线的城市纪念卡。</p>
+        <button id="quickStart" class="primary" type="button">开始逛济南</button>
+        <button id="previewRoutes" class="text-button" type="button">先看看有哪些路线</button>
       </div>
     </article>
   </section>
@@ -121,7 +120,7 @@
           <div><b id="factB"></b><span id="factBText"></span></div>
         </div>
         <div class="story-actions">
-          <button id="collect">收进手账</button>
+          <button id="collect">盖下这枚印章</button>
           <button id="close" class="ghost">继续走走</button>
         </div>
       </div>
@@ -135,15 +134,39 @@
         <small id="resultKicker">本次泉城漫游完成</small>
         <h2 id="resultTitle">你的像素明信片做好了</h2>
         <p id="resultDesc">这张济南旅行票根由 AI 绘制，并按确认过的景点相对方位制作。可以原样下载保存，也可以回到地图继续逛。</p>
+        <label class="result-name"><span>把名字写在纪念卡上（选填）</span><input id="resultName" maxlength="12" autocomplete="nickname" placeholder="旅行者"></label>
         <div class="result-stats">
           <div><b id="resultZones">0</b><span id="statZonesLabel">走过区域</span></div>
           <div><b id="resultFinds">0</b><span id="statFindsLabel">收录风景</span></div>
         </div>
         <div class="result-actions">
-          <button id="downloadCard" class="download">下载我的像素明信片</button>
+          <button id="downloadCard" class="download">保存路线纪念卡</button>
+          <button id="shareCard" class="share">分享这次漫游</button>
+          <button id="makeBead" class="bead">生成 29×29 拼豆章</button>
           <button id="continueTrip" class="continue">继续漫游</button>
         </div>
       </div>
+    </article>
+  </section>
+
+  <section id="journal" class="journal" aria-modal="true" role="dialog">
+    <article class="journal-panel">
+      <header><div><small>QUANCHENG TRAVEL JOURNAL</small><h2>我的泉城手账</h2></div><button id="closeJournal" aria-label="关闭手账">×</button></header>
+      <div id="journalGrid" class="journal-grid"></div>
+      <footer><span id="journalSummary">还没有盖下印章</span><button id="journalFinish">生成纪念卡</button></footer>
+    </article>
+  </section>
+
+  <div id="stampToast" class="stamp-toast"><b>已盖章</b><span></span></div>
+
+  <section id="beadMaker" class="bead-maker" aria-modal="true" role="dialog">
+    <article class="bead-panel">
+      <button id="closeBead" class="bead-close" aria-label="关闭拼豆预览">×</button>
+      <div><small>把这次路线带回现实</small><h2>你的 29×29 泉城拼豆章</h2><p>路线、起终点和收集过的地标会被压缩成 8 色纪念章。</p></div>
+      <canvas id="beadCanvas" width="580" height="580"></canvas>
+      <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b>8</b> 种颜色</span><span><b>14.5cm</b> 成品</span></div>
+      <button id="downloadBead" class="primary">下载拼豆预览图</button>
+      <p class="prototype-note">产品原型：下一版接品牌色号、分板图和打印 PDF。</p>
     </article>
   </section>
 
