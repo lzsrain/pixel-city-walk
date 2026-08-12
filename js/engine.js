@@ -208,6 +208,14 @@
 
   function routePlan(){return routeDefs[selectedRoute]||[]}
   function nextRouteZone(){return routePlan().find(id=>!route.includes(id))||null}
+  function updateBeadUnlockUI(){
+    const button=$('#makeBead'),item=city.beadCollectibles?.[0];
+    if(!item){button.hidden=true;return}
+    const missing=(item.unlockRoute||[]).filter(id=>!route.includes(id));
+    button.hidden=false;button.disabled=missing.length>0;
+    button.textContent=missing.length?`再走 ${missing.length} 站解锁地标拼豆`:'查看已解锁的地标拼豆';
+    button.title=missing.length?`还需到达：${missing.map(id=>zones[id]?.name||id).join('、')}`:'';
+  }
   function currentUnvisitedScene(){if(!currentZone)return null;return zones[currentZone].scenes.findIndex((_,i)=>!visited.has(currentZone+':'+i))}
   function updateProductUI(){
     const allScenes=Object.values(zones).flatMap(z=>z.scenes),zoneScenes=currentZone?zones[currentZone].scenes:[];
@@ -217,7 +225,7 @@
     if(currentZone&&nextScene>=0){const s=zoneScenes[nextScene],meters=Math.max(1,Math.round(Math.hypot(player.x-s.x,player.y-s.y)/3));label=`下一处：${s.name} · ${meters}m`}
     else if(nextRouteZone())label=`下一站：${zones[nextRouteZone()].name}`;
     else if(routePlan().length)label='路线完成，可以生成纪念卡';
-    $('#nextTarget').textContent=label;refreshPins();
+    $('#nextTarget').textContent=label;refreshPins();updateBeadUnlockUI();
   }
 
   function detectScene(){
@@ -344,7 +352,7 @@
     g.save();g.fillStyle='rgba(255,250,240,.86)';g.strokeStyle='#26352f';g.lineWidth=3;g.fillRect(box.x,box.y,box.w,box.h);g.strokeRect(box.x,box.y,box.w,box.h);g.beginPath();trail.forEach((p,i)=>{const x=box.x+p.x*sx,y=box.y+p.y*sy;i?g.lineTo(x,y):g.moveTo(x,y)});g.strokeStyle='#c24433';g.lineWidth=7;g.lineCap='round';g.lineJoin='round';g.stroke();const first=trail[0],end=trail.at(-1);[[first,'起'],[end,'终']].forEach(([p,t])=>{const x=box.x+p.x*sx,y=box.y+p.y*sy;g.fillStyle=t==='起'?'#75c6a3':'#f4c64f';g.beginPath();g.arc(x,y,13,0,Math.PI*2);g.fill();g.strokeStyle='#17241d';g.lineWidth=3;g.stroke();g.fillStyle='#17241d';g.font='900 15px sans-serif';g.textAlign='center';g.fillText(t,x,y+5)});g.restore()
   }
 
-  async function finishTrip(){keys.clear();saveProgress();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});$('#resultName').value=playerName==='旅行者'?'':playerName;drawTravelCard();$('#tripEnd').classList.add('open')}
+  async function finishTrip(){keys.clear();saveProgress();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});$('#resultName').value=playerName==='旅行者'?'':playerName;drawTravelCard();updateBeadUnlockUI();$('#tripEnd').classList.add('open')}
 
   /* ---- events ---- */
   function bindEvents(){
@@ -384,7 +392,7 @@
     $('#story').onclick=e=>{if(e.target.id==='story')$('#story').classList.remove('open')};
     $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已盖下印章';$('#story').classList.remove('open');$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');updateProductUI();buildJournal();saveProgress()};
     $('#openJournal').onclick=()=>{buildJournal();$('#journal').classList.add('open')};$('#closeJournal').onclick=()=>$('#journal').classList.remove('open');$('#journal').onclick=e=>{if(e.target.id==='journal')$('#journal').classList.remove('open')};$('#journalFinish').onclick=()=>{$('#journal').classList.remove('open');finishTrip()};
-    $('#makeBead').onclick=()=>{drawBeadPattern();$('#beadMaker').classList.add('open')};$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>$('#beadCanvas').toBlob(blob=>downloadBlob(blob,'泉城路线-29x29-拼豆章.png'),'image/png');
+    $('#makeBead').onclick=()=>{drawBeadPattern();$('#beadMaker').classList.add('open')};$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>{const item=city.beadCollectibles?.[0];$('#beadCanvas').toBlob(blob=>downloadBlob(blob,item?.downloadName||'城市地标-29x29-拼豆图纸.png'),'image/png')};
 
     addEventListener('resize',()=>{fit();draw();applyMapTransform()});
 
@@ -393,43 +401,15 @@
   }
 
   function downloadBlob(blob,name){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)}
-  function gridLine(grid,x0,y0,x1,y1,value){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);let dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;for(;;){if(grid[y0]?.[x0]!==undefined)grid[y0][x0]=value;if(x0===x1&&y0===y1)break;const e2=2*err;if(e2>=dy){err+=dy;x0+=sx}if(e2<=dx){err+=dx;y0+=sy}}}
   function drawBeadPattern(){
-    const N=29,cell=20,grid=Array.from({length:N},()=>Array(N).fill(0));
-    const palette=[
-      {name:'空位',color:'#f7f1d7'},
-      {name:'象牙白·章面',color:'#fff2ca'},
-      {name:'墨绿·轮廓',color:'#17241d'},
-      {name:'泉水绿·泉字',color:'#2f7d67'},
-      {name:'湖水蓝·波纹',color:'#4a9ac3'},
-      {name:'朱红·路线',color:'#c24433'},
-      {name:'金黄·待到达',color:'#f4c64f'},
-      {name:'薄荷·已到达',color:'#75c6a3'}
-    ];
-
-    // Connected round badge: every occupied bead belongs to one stable piece.
-    for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-      const d=Math.hypot(x-14,y-14);
-      if(d<=13)grid[y][x]=d>=11.8?2:1;
-    }
-
-    // Rasterize the city character into the bead grid. Sampling a real glyph
-    // gives a recognisable “泉”, while the final output remains 29×29 beads.
-    const glyph=document.createElement('canvas');glyph.width=N;glyph.height=N;
-    const gg=glyph.getContext('2d');gg.clearRect(0,0,N,N);gg.fillStyle='#000';gg.textAlign='center';gg.textBaseline='middle';gg.font='900 18px "PingFang SC","Microsoft YaHei",sans-serif';gg.fillText('泉',14.5,14.5,19);
-    const pixels=gg.getImageData(0,0,N,N).data;
-    for(let y=5;y<=20;y++)for(let x=5;x<=23;x++)if(pixels[(y*N+x)*4+3]>72&&grid[y][x])grid[y][x]=3;
-
-    // Three connected spring ripples anchor the badge and keep the motif local.
-    [[8,20,20,20],[6,22,22,22],[9,24,19,24]].forEach(([x0,y0,x1,y1])=>{
-      for(let x=x0;x<=x1;x++)if(grid[y0][x])grid[y0][x]=4;
-      if(grid[y0-1]?.[x0])grid[y0-1][x0]=4;if(grid[y0-1]?.[x1])grid[y0-1][x1]=4;
-    });
-
-    // Route progress is a small, legible layer instead of the whole picture.
-    const plan=routePlan().length?routePlan():route.slice(0,3),nodes=Math.max(2,Math.min(3,plan.length||3));
-    const xs=nodes===2?[10,18]:[8,14,20];gridLine(grid,xs[0],4,xs.at(-1),4,5);
-    xs.forEach((x,i)=>{const reached=plan[i]&&route.includes(plan[i]);for(let yy=-1;yy<=1;yy++)for(let xx=-1;xx<=1;xx++)if(grid[4+yy]?.[x+xx])grid[4+yy][x+xx]=reached?7:6});
+    const item=city.beadCollectibles?.[0];
+    if(!item)return;
+    const N=item.size||29,cell=20,palette=item.palette;
+    const grid=item.pattern.map(row=>[...row].map(Number));
+    $('#beadKicker').textContent=item.unlockLabel;
+    $('#beadTitle').textContent=item.title;
+    $('#beadDesc').textContent=item.description;
+    $('#downloadBead').textContent=item.downloadLabel;
 
     const c=$('#beadCanvas'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.fillStyle=palette[0].color;g.fillRect(0,0,c.width,c.height);
     const counts=Array(palette.length).fill(0);
