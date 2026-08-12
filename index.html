@@ -5,16 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Pixel City Walk 的济南示例：一个可以游览、打卡并生成旅行名片的非官方像素城市网页游戏。">
-  <meta name="pcw-local-preview" content="http://127.0.0.1:4173/?preview=v11">
   <title>泉城漫游记 · 济南像素世界</title>
-  <script>
-    // Local product-lab convenience: a double-clicked file redirects to the
-    // configured HTTP preview so city packages can be loaded safely.
-    if(location.protocol==='file:'){
-      const preview=document.querySelector('meta[name="pcw-local-preview"]')?.content;
-      if(preview)location.replace(preview+'&source=file');
-    }
-  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -183,16 +174,15 @@
   <section id="serverWarning" class="server-warning" aria-modal="true" role="dialog">
     <article class="card">
       <small>无法加载城市数据</small>
-      <h2>不要直接双击 index.html</h2>
-      <p>本项目需要通过 HTTP 访问才能加载城市数据包。当前页面是以本地文件方式打开的，因此浏览器阻止了数据读取。</p>
-      <p>请在项目目录下运行：</p>
-      <p><code>python3 -m http.server</code></p>
-      <p>然后打开终端显示的本地地址，端口以终端输出为准。</p>
+      <h2>这个城市包暂时无法打开</h2>
+      <p>页面没有找到对应的城市数据。请确认城市包存在，或返回济南示例重新进入。</p>
+      <p><code>?city=jinan</code></p>
     </article>
   </section>
 
   <div class="asset-credit">角色：Imogia Games / OpenGameArt（CC0） · 地形素材参考：Kenney RPG Urban（CC0）</div>
 
+  <script src="cities/jinan/city-data.js"></script>
   <script src="js/engine.js"></script>
 </body>
 </html>

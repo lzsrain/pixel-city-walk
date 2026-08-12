@@ -29,6 +29,9 @@
 
   /* ---- city loading ---- */
   async function loadCity(path){
+    const cityId=path.split('/').at(-2);
+    const bundled=window.PCW_CITY_PACKAGES?.[cityId];
+    if(bundled)return bundled;
     const res=await fetch(path);
     if(!res.ok)throw new Error('city.json '+res.status);
     return res.json();
