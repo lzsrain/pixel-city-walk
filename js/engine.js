@@ -211,10 +211,10 @@
   function updateBeadUnlockUI(){
     const button=$('#makeBead'),item=city.beadCollectibles?.[0];
     if(!item){button.hidden=true;return}
-    const missing=(item.unlockRoute||[]).filter(id=>!route.includes(id));
+    const missing=(item.unlockRoute||[]).filter(id=>![...visited].some(key=>key.startsWith(id+':')));
     button.hidden=false;button.disabled=missing.length>0;
-    button.textContent=missing.length?`再走 ${missing.length} 站解锁地标拼豆`:'查看已解锁的地标拼豆';
-    button.title=missing.length?`还需到达：${missing.map(id=>zones[id]?.name||id).join('、')}`:'';
+    button.textContent=missing.length?`再收集 ${missing.length} 个水脉模块`:'组装泉城水脉灯牌';
+    button.title=missing.length?`还需在这里收集：${missing.map(id=>zones[id]?.name||id).join('、')}`:'';
   }
   function currentUnvisitedScene(){if(!currentZone)return null;return zones[currentZone].scenes.findIndex((_,i)=>!visited.has(currentZone+':'+i))}
   function updateProductUI(){
@@ -261,7 +261,7 @@
 
   function buildJournal(){
     const items=[];Object.entries(zones).forEach(([zoneId,z])=>z.scenes.forEach((s,i)=>{const done=visited.has(zoneId+':'+i);items.push(`<div class="journal-item ${done?'':'locked'}">${done?'<i class="journal-seal">泉</i>':'<i class="journal-seal">?</i>'}<b>${done?s.name:'待发现的风景'}</b><span>${z.name} · ${done?'已盖章':'沿路线继续寻找'}</span></div>`)}));
-    $('#journalGrid').innerHTML=items.join('');$('#journalSummary').textContent=visited.size?`已经收下 ${visited.size} 处泉城风景`:'还没有盖下印章';
+    $('#journalGrid').innerHTML=items.join('');$('#journalSummary').textContent=visited.size?`已经收下 ${visited.size} 个城市组件`:'还没有收集城市组件';
   }
 
   /* ---- postcard ---- */
@@ -341,7 +341,7 @@
     }
     drawRouteOnCard(g);
     drawCardOverlay(g,card,uniqueZones,finds);
-    $('#resultTitle').textContent=fmt(city.ui.resultTitle,playerName);
+    $('#resultTitle').textContent=city.beadCollectibles?.length?`${playerName}，你的城市纪念物可以组装了`:fmt(city.ui.resultTitle,playerName);
     $('#resultZones').textContent=uniqueZones.length;
     $('#resultFinds').textContent=finds.length;
     return card
@@ -390,7 +390,7 @@
     $('#look').onclick=()=>openScene(nearScene);
     $('#close').onclick=()=>$('#story').classList.remove('open');
     $('#story').onclick=e=>{if(e.target.id==='story')$('#story').classList.remove('open')};
-    $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已盖下印章';$('#story').classList.remove('open');$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');updateProductUI();buildJournal();saveProgress()};
+    $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已收下组件';$('#story').classList.remove('open');$('#stampToast b').textContent='已收下城市组件';$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');updateProductUI();buildJournal();saveProgress()};
     $('#openJournal').onclick=()=>{buildJournal();$('#journal').classList.add('open')};$('#closeJournal').onclick=()=>$('#journal').classList.remove('open');$('#journal').onclick=e=>{if(e.target.id==='journal')$('#journal').classList.remove('open')};$('#journalFinish').onclick=()=>{$('#journal').classList.remove('open');finishTrip()};
     $('#makeBead').onclick=()=>{drawBeadPattern();$('#beadMaker').classList.add('open')};$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>{const item=city.beadCollectibles?.[0];$('#beadCanvas').toBlob(blob=>downloadBlob(blob,item?.downloadName||'城市地标-29x29-拼豆图纸.png'),'image/png')};
 
@@ -404,21 +404,24 @@
   function drawBeadPattern(){
     const item=city.beadCollectibles?.[0];
     if(!item)return;
-    const N=item.size||29,cell=20,palette=item.palette;
+    const cols=item.width||item.size||29,rows=item.height||item.size||29,cell=20,palette=item.palette;
     const grid=item.pattern.map(row=>[...row].map(Number));
     $('#beadKicker').textContent=item.unlockLabel;
     $('#beadTitle').textContent=item.title;
     $('#beadDesc').textContent=item.description;
     $('#downloadBead').textContent=item.downloadLabel;
+    $('#beadModules').innerHTML=(item.moduleLabels||[]).map(label=>`<span>${label}</span>`).join('');
 
-    const c=$('#beadCanvas'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.fillStyle=palette[0].color;g.fillRect(0,0,c.width,c.height);
+    const c=$('#beadCanvas'),g=c.getContext('2d');c.width=cols*cell;c.height=rows*cell;g.clearRect(0,0,c.width,c.height);g.fillStyle=palette[0].color;g.fillRect(0,0,c.width,c.height);
     const counts=Array(palette.length).fill(0);
     grid.forEach((row,y)=>row.forEach((v,x)=>{
       g.strokeStyle='rgba(23,36,29,.11)';g.strokeRect(x*cell,y*cell,cell,cell);
       if(!v)return;counts[v]++;g.fillStyle=palette[v].color;g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,8.7,0,Math.PI*2);g.fill();g.strokeStyle='rgba(23,36,29,.32)';g.stroke();g.fillStyle=palette[0].color;g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,2.25,0,Math.PI*2);g.fill();
     }));
+    if(cols>29){g.save();g.strokeStyle='rgba(194,68,51,.7)';g.lineWidth=3;g.setLineDash([10,8]);for(let x=29;x<cols;x+=29){g.beginPath();g.moveTo(x*cell,0);g.lineTo(x*cell,c.height);g.stroke()}g.restore()}
     const used=counts.reduce((n,v,i)=>n+(i&&v?1:0),0),total=counts.reduce((n,v,i)=>n+(i?v:0),0);
     $('#beadCount').textContent=total;$('#beadColorCount').textContent=used;
+    $('#beadBoardCount').textContent=Math.ceil(cols/29)*Math.ceil(rows/29);
     $('#beadLegend').innerHTML=palette.map((p,i)=>i&&counts[i]?`<span><i style="background:${p.color}"></i>${p.name} · ${counts[i]}</span>`:'').join('');
   }
 
@@ -433,7 +436,7 @@
       applyCity(c);
       // static UI strings that depend on city
       const ui=c.ui;
-      $('#playerGreeting').textContent=`一个抽象的${c.name}像素世界`;
+      $('#playerGreeting').textContent=`把${c.name}走成一件纪念物`;
       $('#mapWaitKicker').textContent=ui.mapWaitKicker;
       $('#mapWelcome').textContent=fmt(ui.mapWaitTitle,'旅行者');
       $('#mapWaitHint').textContent=ui.mapWaitHint;
@@ -441,12 +444,12 @@
       $('#finishTrip').textContent=ui.finishLabel;
       $('#back').textContent=ui.backLabel;
       $('#look').textContent=ui.lookLabel;
-      $('#collect').textContent='盖下这枚印章';
+      $('#collect').textContent='收下这个城市组件';
       $('#close').textContent=ui.continueLabel;
       $('#continueTrip').textContent=ui.continueTripLabel;
-      $('#downloadCard').textContent='保存路线纪念卡';
-      $('#resultKicker').textContent=ui.resultKicker;
-      $('#resultDesc').textContent=ui.resultDesc;
+      $('#downloadCard').textContent='保存数字路线卡';
+      $('#resultKicker').textContent='本次城市组件收集完成';
+      $('#resultDesc').textContent='路线决定你收集到哪些城市模块；完成指定组合后，可以下载一张能实际照着制作的拼豆图纸。';
       $('#statZonesLabel').textContent=ui.statZonesLabel;
       $('#statFindsLabel').textContent=ui.statFindsLabel;
       $('#promptLabel').textContent=ui.promptLabel;

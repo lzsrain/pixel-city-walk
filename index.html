@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Pixel City Walk 的济南示例：一个可以游览、打卡并生成旅行名片的非官方像素城市网页游戏。">
+  <meta name="description" content="Pixel City Walk 的济南示例：边走边收集城市模块，最后把泉城水脉做成一件拼豆纪念物。">
   <title>泉城漫游记 · 济南像素世界</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -16,13 +16,13 @@
           <div class="brandmark">泉</div>
           <div>
             <b>泉城漫游记</b>
-            <small id="playerGreeting">一个抽象的济南像素世界</small>
+            <small id="playerGreeting">把一座城走成一件纪念物</small>
           </div>
         </div>
         <div class="top-actions">
           <button id="resetTrip" hidden>↺ 重新开始</button>
           <button id="back" hidden>◎ 返回世界地图</button>
-          <button id="openJournal">手账 <b id="journalCount">0</b>/<span id="journalTotal">0</span></button>
+          <button id="openJournal">收藏 <b id="journalCount">0</b>/<span id="journalTotal">0</span></button>
           <button id="finishTrip" hidden>✓ 结束漫游</button>
         </div>
       </header>
@@ -64,13 +64,13 @@
           </div>
           <div class="route-picker" aria-label="选择漫游路线">
             <button class="route-card selected" data-route="first">
-              <span>推荐</span><b>第一次来</b><small>趵突泉 → 泉城广场 → 黑虎泉 · 约 5 分钟</small>
+              <span>水脉</span><b>泉从哪里来</b><small>趵突泉 → 泉城广场 → 黑虎泉 · 解锁水脉灯牌</small>
             </button>
             <button class="route-card" data-route="lake">
-              <span>轻松</span><b>湖边慢走</b><small>大明湖 → 老城 · 约 3 分钟</small>
+              <span>湖城</span><b>水最后去了哪里</b><small>大明湖 → 老城 · 收集湖、桥、街屋模块</small>
             </button>
             <button class="route-card" data-route="free">
-              <span>自由</span><b>随便逛</b><small>自己决定下一站</small>
+              <span>自由</span><b>自己组一件</b><small>按到访顺序收集城市模块</small>
             </button>
             <button id="startRoute" class="route-start">从趵突泉出发</button>
           </div>
@@ -90,9 +90,9 @@
       <div class="launch-map" aria-hidden="true"><div class="launch-sprite"></div><i></i><i></i><i></i></div>
       <div class="launch-copy">
         <small>PIXEL CITY WALK · JINAN</small>
-        <h1>在像素济南<br>散个步</h1>
-        <p>逛景点、盖印章，最后生成一张真正记录你路线的城市纪念卡。</p>
-        <button id="quickStart" class="primary" type="button">开始逛济南</button>
+        <h1>把济南走成<br>一条泉水</h1>
+        <p>每到一站收下一块城市组件；走完以后，把南山、泉眼、护城河和大明湖拼成一座会透光的泉城。</p>
+        <button id="quickStart" class="primary" type="button">选一件想做的纪念物</button>
         <button id="previewRoutes" class="text-button" type="button">先看看有哪些路线</button>
       </div>
     </article>
@@ -131,9 +131,9 @@
     <article class="trip-result">
       <div class="card-wrap"><canvas id="travelCard" width="1600" height="900"></canvas></div>
       <div class="result-copy">
-        <small id="resultKicker">本次泉城漫游完成</small>
-        <h2 id="resultTitle">你的像素明信片做好了</h2>
-        <p id="resultDesc">这张济南旅行票根由 AI 绘制，并按确认过的景点相对方位制作。可以原样下载保存，也可以回到地图继续逛。</p>
+        <small id="resultKicker">本次泉城水脉收集完成</small>
+        <h2 id="resultTitle">你的城市纪念物可以组装了</h2>
+        <p id="resultDesc">路线不是图案：它决定你收集到了哪些城市模块。完成指定路线后，可以下载能真正照着拼的双底板图纸。</p>
         <label class="result-name"><span>把名字写在纪念卡上（选填）</span><input id="resultName" maxlength="12" autocomplete="nickname" placeholder="旅行者"></label>
         <div class="result-stats">
           <div><b id="resultZones">0</b><span id="statZonesLabel">走过区域</span></div>
@@ -151,7 +151,7 @@
 
   <section id="journal" class="journal" aria-modal="true" role="dialog">
     <article class="journal-panel">
-      <header><div><small>QUANCHENG TRAVEL JOURNAL</small><h2>我的泉城手账</h2></div><button id="closeJournal" aria-label="关闭手账">×</button></header>
+      <header><div><small>QUANCHENG OBJECT COLLECTION</small><h2>我的泉城组件</h2></div><button id="closeJournal" aria-label="关闭收藏册">×</button></header>
       <div id="journalGrid" class="journal-grid"></div>
       <footer><span id="journalSummary">还没有盖下印章</span><button id="journalFinish">生成纪念卡</button></footer>
     </article>
@@ -164,10 +164,11 @@
       <button id="closeBead" class="bead-close" aria-label="关闭拼豆预览">×</button>
       <div><small id="beadKicker">完成路线后解锁</small><h2 id="beadTitle">城市地标拼豆</h2><p id="beadDesc">每块底板只做一个能认出的城市对象。</p></div>
       <canvas id="beadCanvas" width="580" height="580"></canvas>
-      <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b id="beadColorCount">0</b> 种颜色</span><span><b>1 块</b> 29×29 底板</span></div>
+      <div id="beadModules" class="bead-modules"></div>
+      <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b id="beadColorCount">0</b> 种颜色</span><span><b id="beadBoardCount">0</b> 块标准底板</span></div>
       <div id="beadLegend" class="bead-legend"></div>
       <button id="downloadBead" class="primary">下载地标拼豆图纸</button>
-      <p class="prototype-note">MVP 先验证“地标收藏”是否成立；品牌色号、熨烫说明与实体背卡在图案确认后接入。</p>
+      <p class="prototype-note">透明蓝豆用于水脉层；横向双板可加透明底座或灯带。品牌色号与熨烫分板说明待实体打样后锁定。</p>
     </article>
   </section>
 
@@ -597,6 +598,30 @@
   },
   "beadCollectibles": [
     {
+      "id": "jinan-water-vein",
+      "width": 58,
+      "height": 29,
+      "title": "泉城水脉 · 双底板拼豆灯牌",
+      "unlockLabel": "收集趵突泉、泉城广场、黑虎泉三个水脉模块",
+      "description": "这不是一栋楼，而是济南的成因：南山蓄水、泉眼上涌、护城河汇入大明湖。透明蓝豆组成地下水脉，走过的三个地点成为水面上的模块。",
+      "downloadLabel": "下载泉城水脉双板图纸",
+      "downloadName": "济南-泉城水脉-58x29-拼豆灯牌.png",
+      "productType": "双底板横向灯牌",
+      "moduleLabels": ["南山蓄水", "趵突泉三股", "泉城泉标", "黑虎泉", "大明湖"],
+      "unlockRoute": ["baotu", "square", "heihu"],
+      "palette": [
+        {"name": "空位", "color": "#f7f1d7"}, {"name": "墨黑·轮廓", "color": "#202824"},
+        {"name": "山绿·南山", "color": "#4d725b"}, {"name": "青石·地层", "color": "#817b6d"},
+        {"name": "暖金·城灯", "color": "#e5a83c"}, {"name": "朱红·建筑", "color": "#a74332"},
+        {"name": "透明蓝·泉涌", "color": "#a8e3e5"}, {"name": "泉蓝·水脉", "color": "#4a9fc2"},
+        {"name": "深蓝·地下河", "color": "#26667f"}, {"name": "荷粉·大明湖", "color": "#dc7180"},
+        {"name": "荷绿·大明湖", "color": "#6b9b67"}
+      ],
+      "pattern": [
+        "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000001000000000000000000000000040000000000000000000000", "0000000010100000000000000000000600060006000000000000000000", "0000000010100000000000000000000070070070000000000000000000", "0000000100210000000000000000000007070700000000000000000000", "0000001002021000000000000000000000777000000000000000000000", "0000010002002100000000000000000000070000000000000000000000", "0000010020002100000000006000000000070000000000000000100000", "0000102222222210000006060606353300070000333333333022222000", "0001002222220021000060600064644440070000313313313011111100", "0010002022200003535007007007444440070000060060060005555000", "0010020002000044444407007007444440070000060060060011111100", "0100200000000044444407007007444440070000060060060900000000", "0131111111113111111117117117311111111111161161169291111310", "0000000000000000000007007007000000000000060066666666666660", "0003000000000300300007007007003000000000003777777777777770", "0003030000000300000007007007033000000000003008888888888800", "0003000000030300000007007007003000000030003000000000000000", "0003000000000300000307007007003000000000003000000000030000", "0003000776777777767777777777777776777776777777777706000000", "0003066666666666666666666666666666666666666666666666000000", "0003000088888888888888888888888888888888888888888000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
       "id": "jiefang-pavilion",
       "size": 29,
       "title": "解放阁 · 地标拼豆冰箱贴",
@@ -836,6 +861,6 @@
   }
 } };
   </script>
-  <script src="js/engine.js?v=20260812-7"></script>
+  <script src="js/engine.js?v=20260812-8"></script>
 </body>
 </html>
