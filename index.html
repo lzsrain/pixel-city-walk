@@ -162,11 +162,12 @@
   <section id="beadMaker" class="bead-maker" aria-modal="true" role="dialog">
     <article class="bead-panel">
       <button id="closeBead" class="bead-close" aria-label="关闭拼豆预览">×</button>
-      <div><small>把这次路线带回现实</small><h2>你的 29×29 泉城拼豆章</h2><p>路线、起终点和收集过的地标会被压缩成 8 色纪念章。</p></div>
+      <div><small>把这次路线带回现实</small><h2>你的 29×29 泉城拼豆章</h2><p>“泉”字与三道泉水组成济南徽章；顶部站点记录本次路线进度。</p></div>
       <canvas id="beadCanvas" width="580" height="580"></canvas>
-      <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b>8</b> 种颜色</span><span><b>14.5cm</b> 成品</span></div>
+      <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b id="beadColorCount">0</b> 种颜色</span><span><b>14.5cm</b> 成品</span></div>
+      <div id="beadLegend" class="bead-legend"></div>
       <button id="downloadBead" class="primary">下载拼豆预览图</button>
-      <p class="prototype-note">产品原型：下一版接品牌色号、分板图和打印 PDF。</p>
+      <p class="prototype-note">当前为可识别图案原型；品牌色号与打印底稿将在确认图案后接入。</p>
     </article>
   </section>
 
@@ -782,6 +783,6 @@
   }
 } };
   </script>
-  <script src="js/engine.js?v=20260812-5"></script>
+  <script src="js/engine.js?v=20260812-6"></script>
 </body>
 </html>
