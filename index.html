@@ -174,11 +174,11 @@
   <section id="serverWarning" class="server-warning" aria-modal="true" role="dialog">
     <article class="card">
       <small>无法加载城市数据</small>
-      <h2>请用静态服务器打开</h2>
-      <p>本项目需要通过 HTTP 访问才能加载城市数据包。直接双击 index.html 打开会因浏览器安全限制而无法运行。</p>
+      <h2>不要直接双击 index.html</h2>
+      <p>本项目需要通过 HTTP 访问才能加载城市数据包。当前页面是以本地文件方式打开的，因此浏览器阻止了数据读取。</p>
       <p>请在项目目录下运行：</p>
-      <p><code>python -m http.server 8080</code></p>
-      <p>然后访问 <code>http://127.0.0.1:8080/</code></p>
+      <p><code>python3 -m http.server</code></p>
+      <p>然后打开终端显示的本地地址，端口以终端输出为准。</p>
     </article>
   </section>
 
