@@ -66,7 +66,7 @@
 
     // NPC sprite filter
     const npcSprite=document.querySelector('.npc-sprite');
-    if(c.npc.spriteFilter)npcSprite.style.filter=c.npc.spriteFilter;
+    if(npcSprite&&c.npc.spriteFilter)npcSprite.style.filter=c.npc.spriteFilter;
 
     // brandmark + title
     document.querySelector('.brandmark').textContent=c.brandmark;
@@ -382,7 +382,7 @@
     $('#look').onclick=()=>openScene(nearScene);
     $('#close').onclick=()=>$('#story').classList.remove('open');
     $('#story').onclick=e=>{if(e.target.id==='story')$('#story').classList.remove('open')};
-    $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已盖下印章';$('#story').classList.remove('open');$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');navigator.vibrate?.(35);updateProductUI();buildJournal();saveProgress()};
+    $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已盖下印章';$('#story').classList.remove('open');$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');updateProductUI();buildJournal();saveProgress()};
     $('#openJournal').onclick=()=>{buildJournal();$('#journal').classList.add('open')};$('#closeJournal').onclick=()=>$('#journal').classList.remove('open');$('#journal').onclick=e=>{if(e.target.id==='journal')$('#journal').classList.remove('open')};$('#journalFinish').onclick=()=>{$('#journal').classList.remove('open');finishTrip()};
     $('#makeBead').onclick=()=>{drawBeadPattern();$('#beadMaker').classList.add('open')};$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>$('#beadCanvas').toBlob(blob=>downloadBlob(blob,'泉城路线-29x29-拼豆章.png'),'image/png');
 
@@ -463,10 +463,9 @@
         if(matchMedia('(max-width:850px) and (orientation:portrait)').matches)setMapZoom(1.5);
       }
     }catch(err){
-      // fetch failed — likely opened via file:// without a static server
       const warn=document.querySelector('#serverWarning');
-      if(warn){warn.classList.add('open')}
-      console.error('Failed to load city.json:',err);
+      if(warn){warn.classList.add('open');const detail=warn.querySelector('p');if(detail)detail.textContent=`初始化失败：${err.message}`}
+      console.error('Pixel City Walk initialization failed:',err);
     }
   }
 
