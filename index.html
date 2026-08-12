@@ -5,7 +5,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Pixel City Walk 的济南示例：一个可以游览、打卡并生成旅行名片的非官方像素城市网页游戏。">
+  <meta name="pcw-local-preview" content="http://127.0.0.1:4173/?preview=v11">
   <title>泉城漫游记 · 济南像素世界</title>
+  <script>
+    // Local product-lab convenience: a double-clicked file redirects to the
+    // configured HTTP preview so city packages can be loaded safely.
+    if(location.protocol==='file:'){
+      const preview=document.querySelector('meta[name="pcw-local-preview"]')?.content;
+      if(preview)location.replace(preview+'&source=file');
+    }
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
