@@ -1,0 +1,46 @@
+name: Repository Governance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Scan secrets
+        uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  repository-hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Reject sensitive files and oversized blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad=$(git ls-files | grep -E '(^|/)(\.env($|\.)|id_rsa($|\.)|id_ed25519($|\.)|.*\.(pem|p12|pfx|key)$)' | grep -vE '\.env\.example$' || true)
+          if [ -n "$bad" ]; then
+            echo "Sensitive-looking tracked files:"
+            echo "$bad"
+            exit 1
+          fi
+          while IFS= read -r -d "" file; do
+            size=$(wc -c < "$file")
+            if [ "$size" -gt 52428800 ]; then
+              echo "Tracked file exceeds 50 MiB: $file"
+              exit 1
+            fi
+          done < <(git ls-files -z)
