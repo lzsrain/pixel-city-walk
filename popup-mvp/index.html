@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>济南立体像素手账 · 趵突泉</title>
+  <meta name="description" content="拖动书页，让趵突泉从纸上立起来。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="desk">
+    <p class="eyebrow">JINAN · PIXEL POP-UP SKETCHBOOK</p>
+    <div class="book-shell" id="bookShell">
+      <div class="book" id="book">
+        <section class="page left-page" aria-label="手账说明">
+          <div class="left-copy">
+            <span class="chapter">第一折 · 趵突泉</span>
+            <h1>济南立体<br>像素手账</h1>
+            <i class="water-rule" aria-hidden="true"></i>
+            <p>拖动右页，<br>把泉城从纸上翻出来。</p>
+            <button id="openBook" type="button">翻开济南 <span>←</span></button>
+          </div>
+          <div class="map-note" aria-hidden="true">
+            <span>36.6606° N</span><b>泉</b><span>117.0094° E</span>
+          </div>
+        </section>
+
+        <section class="page right-page" aria-label="趵突泉立体像素场景">
+          <div class="scene" id="scene">
+            <div class="scene-layer water-layer"></div>
+            <div class="scene-layer pavilion-layer"></div>
+            <div class="scene-layer foreground-layer"></div>
+            <div class="scene-glow"></div>
+            <small class="truth-label">真实地点 · 艺术化像素立体场景</small>
+          </div>
+          <button class="hotspot" id="hotspot" type="button" aria-expanded="false" aria-controls="storyCard">
+            <span>泉</span>
+          </button>
+          <aside class="story-card" id="storyCard" aria-hidden="true">
+            <button id="closeStory" type="button" aria-label="关闭简介">×</button>
+            <span class="story-kicker">真实地点 · 01</span>
+            <h2>趵突泉 · 三股水</h2>
+            <p>地下泉水从三处泉眼涌出。它不是城外的景点，而是济南水系在城中露出的起点。</p>
+          </aside>
+        </section>
+
+        <div class="spine" aria-hidden="true"></div>
+        <div class="turning-page" id="turningPage" aria-label="可拖动书页">
+          <div class="paper-front">
+            <span class="cover-mark">泉</span>
+            <p>泉水如何<br>穿过一座城</p>
+            <small>按住纸面向左拖动</small>
+          </div>
+          <div class="paper-back">
+            <div class="back-note">
+              <small>济南 · 泉城水脉</small>
+              <strong>一页纸，<br>托起一眼泉。</strong>
+              <p>泉从城里涌出，<br>再沿水系穿过整座济南。</p>
+            </div>
+            <span>趵突泉</span>
+          </div>
+          <div class="curl" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <p class="gesture-hint" id="gestureHint"><span>←</span> DRAG THE PAGE TO REVEAL THE SPRING</p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

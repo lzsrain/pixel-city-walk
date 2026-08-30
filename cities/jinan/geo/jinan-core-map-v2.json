@@ -1,0 +1,267 @@
+{
+  "version": 2,
+  "image": {
+    "width": 1536,
+    "height": 1024,
+    "pixelBlock": 2
+  },
+  "bbox": [
+    117.003,
+    36.654,
+    117.032,
+    36.679
+  ],
+  "projection": {
+    "type": "local-equirectangular-equal-scale",
+    "center": [
+      117.0175,
+      36.6665
+    ],
+    "longitudeCorrection": 0.80212493,
+    "metersPerOutputPixel": 3.221,
+    "mapFrame": [
+      572,
+      36,
+      1508,
+      988
+    ],
+    "mapInner": [
+      608,
+      80,
+      1468,
+      944
+    ]
+  },
+  "source": {
+    "file": "cities/jinan/geo/jinan-core.osm",
+    "provider": "OpenStreetMap contributors",
+    "license": "ODbL 1.0"
+  },
+  "renderPolicy": {
+    "geometry": "OSM geometry is projected without moving or straightening features",
+    "included": [
+      "water polygons and named waterways",
+      "parks and gardens",
+      "primary through residential roads plus named pedestrian streets",
+      "large building footprints and all tagged tourism/historic buildings",
+      "OSM-recorded tree rows, trees, and spring points"
+    ],
+    "omittedAtThisZoom": [
+      "unnamed drains and ditches",
+      "service roads",
+      "unnamed footways",
+      "small ordinary building footprints"
+    ]
+  },
+  "landmarks": [
+    {
+      "id": "baotu",
+      "name": "趵突泉",
+      "kind": "spring",
+      "osm": {
+        "type": "node",
+        "id": 5723485328
+      },
+      "lon": 117.009416,
+      "lat": 36.6605638,
+      "x": 814,
+      "y": 718,
+      "labelBox": [
+        714,
+        734,
+        786,
+        760
+      ]
+    },
+    {
+      "id": "square",
+      "name": "泉城广场",
+      "kind": "square",
+      "osm": {
+        "type": "way",
+        "id": 591478174
+      },
+      "lon": 117.0160477,
+      "lat": 36.6610843,
+      "x": 998,
+      "y": 700,
+      "labelBox": [
+        1012,
+        714,
+        1104,
+        742
+      ]
+    },
+    {
+      "id": "heihu",
+      "name": "黑虎泉",
+      "kind": "spring",
+      "osm": {
+        "type": "node",
+        "id": 5723485330
+      },
+      "lon": 117.0272136,
+      "lat": 36.6621654,
+      "x": 1308,
+      "y": 662,
+      "labelBox": [
+        1202,
+        684,
+        1274,
+        710
+      ]
+    },
+    {
+      "id": "jiefang",
+      "name": "解放阁",
+      "kind": "pavilion",
+      "osm": {
+        "type": "way",
+        "id": 31781501
+      },
+      "lon": 117.0275869,
+      "lat": 36.6626982,
+      "x": 1318,
+      "y": 644,
+      "labelBox": [
+        1332,
+        604,
+        1404,
+        634
+      ]
+    },
+    {
+      "id": "wulong",
+      "name": "五龙潭",
+      "kind": "lake",
+      "osm": {
+        "type": "way",
+        "id": 482251967
+      },
+      "lon": 117.0082174,
+      "lat": 36.6650184,
+      "x": 780,
+      "y": 564,
+      "labelBox": [
+        680,
+        526,
+        752,
+        552
+      ]
+    },
+    {
+      "id": "furong",
+      "name": "芙蓉街",
+      "kind": "street",
+      "osm": {
+        "type": "node",
+        "id": 8842243915
+      },
+      "lon": 117.0160584,
+      "lat": 36.6643835,
+      "x": 998,
+      "y": 586,
+      "labelBox": [
+        896,
+        600,
+        968,
+        630
+      ]
+    },
+    {
+      "id": "pearl",
+      "name": "珍珠泉",
+      "kind": "spring",
+      "osm": {
+        "type": "node",
+        "id": 5530538384
+      },
+      "lon": 117.0188337,
+      "lat": 36.6671006,
+      "x": 1074,
+      "y": 492,
+      "labelBox": [
+        1088,
+        506,
+        1160,
+        534
+      ]
+    },
+    {
+      "id": "qushuiting",
+      "name": "曲水亭街",
+      "kind": "street",
+      "osm": {
+        "type": "way",
+        "id": 1140719131
+      },
+      "lon": 117.0184131,
+      "lat": 36.6688172,
+      "x": 1064,
+      "y": 432,
+      "labelBox": [
+        944,
+        392,
+        1036,
+        420
+      ]
+    },
+    {
+      "id": "baihuazhou",
+      "name": "百花洲",
+      "kind": "lake",
+      "osm": {
+        "type": "way",
+        "id": 39723709
+      },
+      "lon": 117.0185501,
+      "lat": 36.6709268,
+      "x": 1068,
+      "y": 360,
+      "labelBox": [
+        1082,
+        376,
+        1154,
+        402
+      ]
+    },
+    {
+      "id": "daming",
+      "name": "大明湖",
+      "kind": "lake",
+      "osm": {
+        "type": "relation",
+        "id": 2616968
+      },
+      "lon": 117.0177642,
+      "lat": 36.6748909,
+      "x": 1046,
+      "y": 222,
+      "labelBox": [
+        996,
+        208,
+        1068,
+        236
+      ]
+    },
+    {
+      "id": "chaoran",
+      "name": "超然楼",
+      "kind": "pavilion",
+      "osm": {
+        "type": "way",
+        "id": 578321008
+      },
+      "lon": 117.0262765,
+      "lat": 36.6749261,
+      "x": 1282,
+      "y": 220,
+      "labelBox": [
+        1296,
+        180,
+        1368,
+        210
+      ]
+    }
+  ]
+}

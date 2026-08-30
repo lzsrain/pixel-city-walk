@@ -5,6 +5,8 @@
   'use strict';
 
   let city=null;            // loaded city data
+  let chapterCatalog=null;
+  let activeChapter=null;
   let WORLD={w:1536,h:1024};
   let zones={};
   let waters=[];
@@ -18,6 +20,7 @@
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const overview=document.querySelector('#overview');
   const onboarding=document.querySelector('#onboarding');
+  const chapterHub=document.querySelector('#chapterHub');
   const mapViewport=document.querySelector('#mapViewport');
   const mapCanvas=document.querySelector('#mapCanvas');
 
@@ -25,7 +28,9 @@
   const camera={x:0,y:0,zoom:1.65};
   let currentZone=null,nearScene=null,activeScene=null,playerName='旅行者',mapScale=1,mapX=0,mapY=0,mapDrag=null,last=performance.now();
   let selectedRoute='first';
-  const routeDefs={first:['baotu','square','heihu'],lake:['daming','oldcity'],free:[]};
+  let selectedBead=0;
+  const ENABLE_BEADS=false;
+  let routeDefs={first:['baotu','square','heihu'],lake:['daming','oldcity'],free:[]};
 
   /* ---- city loading ---- */
   async function loadCity(path){
@@ -39,6 +44,12 @@
 
   function applyCity(c){
     city=c;
+    const configured=window.PCW_CITY_CHAPTERS?.[c.id]||window.CITY_CHAPTERS;
+    if(c.chapters){
+      const items=Array.isArray(c.chapters)?c.chapters:Object.values(c.chapters);
+      chapterCatalog={defaultId:c.defaultChapterId||c.chapterOrder?.[0]||items[0]?.id,overview:c.chapterOverview||c.assets.map,items};
+    }
+    else if(configured)chapterCatalog=configured;
     WORLD=c.world;
     zones=c.zones;
     waters=c.waters||[];
@@ -82,6 +93,111 @@
     if(c.ui.assetCredit)credit.textContent=c.ui.assetCredit;
   }
 
+  function chapterById(id){return chapterCatalog?.items?.find(chapter=>chapter.id===id)||null}
+  function isAerialHotspots(){return activeChapter?.presentation==='aerial-hotspots'}
+  function imageWithFallback(image,src,fallback,onFallback){
+    let triedFallback=false;
+    image.onerror=()=>{
+      if(triedFallback||!fallback)return;
+      triedFallback=true;
+      image.src=fallback;
+      onFallback?.(fallback);
+    };
+    image.src=src||fallback;
+  }
+
+  function renderChapterHub(){
+    if(!chapterCatalog)return;
+    const hubOverview=chapterCatalog.overview||city.assets.map;
+    chapterHub.style.setProperty('--chapter-overview-url',`url('${new URL(hubOverview,document.baseURI).href}')`);
+    const availableCount=(chapterCatalog.items||[]).filter(chapter=>chapter.status==='available').length;
+    $('#chapterStatusSummary').textContent=availableCount?`首期开放 ${availableCount} 章 · 其余章节持续更新`:'真实地图制作中 · 章节结构已就绪';
+    const escapeAttr=value=>String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    $('#chapterGrid').innerHTML=(chapterCatalog.items||[]).map(chapter=>{
+      const open=chapter.status==='available';
+      const state=open?'进入漫游':(chapter.release||'即将开放');
+      const art=chapter.status==='available'&&chapter.map?` style="--chapter-card-art:url('${new URL(chapter.map,document.baseURI).href}');--chapter-accent:${chapter.accent||city.theme.gold}"`:` style="--chapter-accent:${chapter.accent||city.theme.gold}"`;
+      return `<button class="chapter-card ${open?'available':'locked'} ${chapter.id===activeChapter?.id?'active':''}" data-chapter="${escapeAttr(chapter.id)}" ${open?'':'aria-disabled="true"'}${art}><span class="chapter-index">${escapeAttr(chapter.index||'--')}</span><i>${escapeAttr(chapter.icon||'城')}</i><small>${escapeAttr(open?'已开放':state)}</small><h2>${escapeAttr(chapter.title)}</h2><p>${escapeAttr(chapter.subtitle||chapter.description||'')}</p><b>${escapeAttr(state)} ${open?'→':'🔒'}</b></button>`
+    }).join('');
+    $('#chapterGrid').querySelectorAll('[data-chapter]').forEach(button=>button.onclick=()=>{
+      const chapter=chapterById(button.dataset.chapter);
+      if(!chapter||chapter.status!=='available'){
+        $('#stampToast b').textContent='章节仍在绘制';
+        $('#stampToast span').textContent=`${chapter?.title||'这一章'} · ${chapter?.release||'即将开放'}`;
+        const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');
+        return
+      }
+      activateChapter(chapter.id);
+    });
+  }
+
+  function renderRoutes(){
+    const routes=activeChapter?.routes||[
+      {id:'first',tag:'水脉',title:'泉从哪里来',description:'趵突泉 → 泉城广场 → 黑虎泉',zoneIds:['baotu','square','heihu']},
+      {id:'lake',tag:'湖城',title:'水最后去了哪里',description:'大明湖 → 老城',zoneIds:['daming','oldcity']},
+      {id:'free',tag:'自由',title:'自己安排路线',description:'按到访顺序收集城市模块',zoneIds:[]}
+    ];
+    routeDefs=Object.fromEntries(routes.map(item=>[item.id,item.zoneIds||[]]));
+    if(!routeDefs[selectedRoute])selectedRoute=routes[0]?.id||'free';
+    const escapeHtml=value=>String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    $('#routeCards').innerHTML=routes.map(item=>`<button class="route-card ${item.id===selectedRoute?'selected':''}" data-route="${escapeHtml(item.id)}"><span>${escapeHtml(item.tag)}</span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.description)}</small></button>`).join('');
+    $('#routeCards').querySelectorAll('[data-route]').forEach(button=>button.onclick=()=>{
+      selectedRoute=button.dataset.route;
+      $('#routeCards').querySelectorAll('[data-route]').forEach(item=>item.classList.toggle('selected',item===button));
+      const first=routePlan()[0];
+      $('#startRoute').textContent=first?`从${zones[first].name}出发`:'在地图上选择一个地标';
+      refreshPins();
+    });
+    const first=routePlan()[0];
+    $('#startRoute').textContent=first?`从${zones[first].name}出发`:'在地图上选择一个地标';
+  }
+
+  function activateChapter(id,options={}){
+    const chapter=chapterById(id);
+    if(!chapter||chapter.status!=='available')return false;
+    activeChapter=chapter;
+    document.body.classList.toggle('aerial-hotspots',isAerialHotspots());
+    WORLD=chapter.world||city.world;
+    waters=('waters' in chapter)?chapter.waters:(city.waters||[]);
+    zones=Object.fromEntries((chapter.zoneIds||Object.keys(city.zones)).filter(zoneId=>city.zones[zoneId]).map(zoneId=>{
+      const source=city.zones[zoneId],override=chapter.zonePositions?.[zoneId]||{};
+      const cloned={...source,...override};
+      cloned.scenes=(source.scenes||[]).map((scene,index)=>({...scene,...(override.scenes?.[index]||{})}));
+      return [zoneId,cloned]
+    }));
+    const start=chapter.player||city.player;
+    player.x=start.startX;player.y=start.startY;player.target=null;
+    camera.zoom=chapter.camera?.zoom||city.camera.zoom;
+    currentZone=null;nearScene=null;activeScene=null;
+    route.length=0;trail.length=0;keys.clear();
+    player.steps=0;
+    selectedRoute=chapter.routes?.[0]?.id||'free';
+
+    const mapSrc=chapter.map||city.assets.map;
+    const postcardSrc=chapter.postcard||city.assets.ticketBase;
+    const setMapCss=src=>document.documentElement.style.setProperty('--city-map-url',`url('${new URL(src,document.baseURI).href}')`);
+    setMapCss(mapSrc);
+    imageWithFallback(worldImage,mapSrc,city.assets.map,setMapCss);
+    imageWithFallback(ticketImage,postcardSrc,city.assets.ticketBase);
+    const mapImg=mapCanvas.querySelector('img');
+    mapImg.onerror=()=>{mapImg.onerror=null;mapImg.src=city.assets.map;setMapCss(city.assets.map)};
+    mapImg.src=mapSrc;mapImg.alt=isAerialHotspots()?`${city.name}${chapter.title}艺术化鸟瞰图，不用于导航`:`${city.name}${chapter.title}像素漫游地图`;
+
+    const copy=chapter.mapCopy||{};
+    $('#mapWaitKicker').textContent=copy.kicker||city.ui.mapWaitKicker;
+    $('#mapWelcome').textContent=copy.title||fmt(city.ui.mapWaitTitle,playerName);
+    $('#mapWaitHint').textContent=copy.hint||city.ui.mapWaitHint;
+    $('#playerGreeting').textContent=`${chapter.shortTitle||chapter.title} · ${playerName}`;
+    $('#journal').querySelector('h2').textContent=`我的${chapter.shortTitle||chapter.title}收藏`;
+    $('#openChapters').hidden=false;
+    $('#openChapters').textContent=`城市册 · ${chapter.shortTitle||chapter.title}`;
+    $('#startRoute').classList.toggle('hotspot-start',isAerialHotspots());
+    renderRoutes();buildPins();buildJournal();updateProductUI();showOverview();resetMapView();renderChapterHub();
+    if(!options.silent){onboarding.classList.remove('open');chapterHub.classList.remove('open')}
+    if(!options.skipSave)saveProgress();
+    return true
+  }
+
   /* ---- helpers ---- */
   const $=s=>document.querySelector(s);
   const fmt=(tpl,name)=>tpl.replace(/\{name\}/g,name);
@@ -91,7 +207,7 @@
   let saveKey='pcw';
   function saveProgress(){
     try{
-      localStorage.setItem(saveKey,JSON.stringify({v:1,name:playerName,visited:[...visited],route:[...route],steps:Math.floor(player.steps)}));
+      localStorage.setItem(saveKey,JSON.stringify({v:2,name:playerName,chapterId:activeChapter?.id||null,visited:[...visited],route:[...route],steps:Math.floor(player.steps)}));
     }catch(e){/* private mode / storage disabled: play without saving */}
   }
   function loadProgress(){
@@ -99,7 +215,7 @@
       const raw=localStorage.getItem(saveKey);
       if(!raw)return null;
       const s=JSON.parse(raw);
-      return s&&s.v===1&&typeof s.name==='string'?s:null;
+      return s&&(s.v===1||s.v===2)&&typeof s.name==='string'?s:null;
     }catch(e){return null}
   }
   function clearProgress(){try{localStorage.removeItem(saveKey)}catch(e){}}
@@ -144,7 +260,7 @@
 
   function draw(){
     const cw=canvas.clientWidth,ch=canvas.clientHeight;ctx.clearRect(0,0,cw,ch);
-    if(!currentZone||!worldImage.complete)return;
+    if(isAerialHotspots()||!currentZone||!worldImage.complete)return;
     const v=view();ctx.save();ctx.scale(camera.zoom,camera.zoom);ctx.translate(-v.x,-v.y);
     ctx.drawImage(worldImage,0,0,WORLD.w,WORLD.h);
     ctx.fillStyle='rgba(8,36,23,.05)';ctx.fillRect(0,0,WORLD.w,WORLD.h);
@@ -167,11 +283,21 @@
   function nearestZoneId(x,y){return Object.entries(zones).reduce((best,[id,z])=>{const distance=(z.x-x)**2+(z.y-y)**2;return distance<best.distance?{id,distance}:best},{id:null,distance:Infinity}).id}
   function setCurrentZone(id,record=true){if(!id||!zones[id])return;currentZone=id;const z=zones[id];$('#zoneName').textContent=z.name;$('#zoneIcon').textContent=z.icon;if(record&&route.at(-1)!==id){route.push(id);saveProgress()}}
   function enterZone(id){const z=zones[id];let tx=z.x,ty=z.y;if(inWater(tx,ty)){for(let r=20;r<200;r+=10){for(let a=0;a<360;a+=45){const rx=tx+Math.cos(a*Math.PI/180)*r,ry=ty+Math.sin(a*Math.PI/180)*r;if(!inWater(rx,ry)){tx=rx;ty=ry;break}}if(!inWater(tx,ty))break}}player.x=tx;player.y=ty;player.target=null;if(route.length===0)player.steps=0;player.dir='down';camera.x=tx-canvas.clientWidth/camera.zoom/2;camera.y=ty-canvas.clientHeight/camera.zoom/2;setCurrentZone(id,true);trail.push({x:tx,y:ty});overview.classList.add('hidden');$('#back').hidden=false;$('#finishTrip').hidden=false;updateProductUI();canvas.focus();draw()}
-  function showOverview(){overview.classList.remove('hidden');currentZone=null;player.target=null;nearScene=null;$('#back').hidden=true;$('#finishTrip').hidden=route.length===0;$('#zoneName').textContent=city.ui.zoneWaitName;$('#zoneIcon').textContent=city.ui.zoneWaitIcon}
+  function openAerialZone(id){
+    if(!zones[id])return;
+    setCurrentZone(id,true);
+    player.target=null;nearScene=null;
+    overview.classList.remove('hidden');
+    $('#back').hidden=true;
+    const next=zones[id].scenes.findIndex((_,index)=>!visited.has(id+':'+index));
+    updateProductUI();
+    openScene(next>=0?next:0)
+  }
+  function showOverview(){overview.classList.remove('hidden');currentZone=null;player.target=null;nearScene=null;$('#back').hidden=true;$('#finishTrip').hidden=isAerialHotspots()?!aerialRouteComplete():route.length===0;$('#zoneName').textContent=city.ui.zoneWaitName;$('#zoneIcon').textContent=city.ui.zoneWaitIcon}
 
   /* ---- update loop ---- */
   function update(dt){
-    if(!currentZone)return;
+    if(isAerialHotspots()||!currentZone)return;
     let dx=0,dy=0;
     if(keys.has('w')||keys.has('arrowup'))dy--;
     if(keys.has('s')||keys.has('arrowdown'))dy++;
@@ -207,25 +333,34 @@
   }
 
   function routePlan(){return routeDefs[selectedRoute]||[]}
-  function nextRouteZone(){return routePlan().find(id=>!route.includes(id))||null}
+  function zoneCollected(id){return [...visited].some(key=>key.startsWith(id+':'))}
+  function nextRouteZone(){return routePlan().find(id=>isAerialHotspots()?!zoneCollected(id):!route.includes(id))||null}
+  function aerialRouteComplete(){
+    if(!isAerialHotspots())return true;
+    const plan=routePlan();
+    return plan.length?plan.every(zoneCollected):[...visited].some(key=>zones[key.split(':')[0]])
+  }
   function updateBeadUnlockUI(){
     const button=$('#makeBead'),item=city.beadCollectibles?.[0];
-    if(!item){button.hidden=true;return}
-    const missing=(item.unlockRoute||[]).filter(id=>![...visited].some(key=>key.startsWith(id+':')));
-    button.hidden=false;button.disabled=missing.length>0;
-    button.textContent=missing.length?`再收集 ${missing.length} 个水脉模块`:'组装泉城水脉灯牌';
-    button.title=missing.length?`还需在这里收集：${missing.map(id=>zones[id]?.name||id).join('、')}`:'';
+    if(!ENABLE_BEADS||!item){button.hidden=true;$('#openBeadGallery').hidden=true;return}
+    button.hidden=false;
+    button.disabled=false;
+    button.textContent='打开济南景点拼豆图鉴';
+    button.title='查看全部济南景点拼豆图纸';
   }
   function currentUnvisitedScene(){if(!currentZone)return null;return zones[currentZone].scenes.findIndex((_,i)=>!visited.has(currentZone+':'+i))}
   function updateProductUI(){
     const allScenes=Object.values(zones).flatMap(z=>z.scenes),zoneScenes=currentZone?zones[currentZone].scenes:[];
+    const activeVisited=[...visited].filter(key=>zones[key.split(':')[0]]);
     const zoneDone=currentZone?zoneScenes.filter((_,i)=>visited.has(currentZone+':'+i)).length:0;
-    $('#journalCount').textContent=visited.size;$('#journalTotal').textContent=allScenes.length;$('#zoneProgress').textContent=currentZone?`${zoneDone}/${zoneScenes.length}`:`${visited.size}/${allScenes.length}`;
+    $('#journalCount').textContent=activeVisited.length;$('#journalTotal').textContent=allScenes.length;$('#zoneProgress').textContent=currentZone?`${zoneDone}/${zoneScenes.length}`:`${activeVisited.length}/${allScenes.length}`;
     let label='自由探索';const nextScene=currentUnvisitedScene();
-    if(currentZone&&nextScene>=0){const s=zoneScenes[nextScene],meters=Math.max(1,Math.round(Math.hypot(player.x-s.x,player.y-s.y)/3));label=`下一处：${s.name} · ${meters}m`}
+    if(currentZone&&nextScene>=0){const s=zoneScenes[nextScene];label=isAerialHotspots()?`本地标下一则：${s.name}`:`下一处：${s.name} · ${Math.max(1,Math.round(Math.hypot(player.x-s.x,player.y-s.y)/3))}m`}
     else if(nextRouteZone())label=`下一站：${zones[nextRouteZone()].name}`;
     else if(routePlan().length)label='路线完成，可以生成纪念卡';
-    $('#nextTarget').textContent=label;refreshPins();updateBeadUnlockUI();
+    $('#nextTarget').textContent=label;
+    if(isAerialHotspots())$('#finishTrip').hidden=!aerialRouteComplete();
+    refreshPins();updateBeadUnlockUI();
   }
 
   function detectScene(){
@@ -255,13 +390,16 @@
   /* ---- map pins ---- */
   function buildPins(){
     $('#pins').innerHTML=Object.entries(zones).map(([id,z])=>`<button class="pin" data-zone="${id}" style="left:${z.x/WORLD.w*100}%;top:${z.y/WORLD.h*100}%"><span>${z.icon}</span><b>${z.name}</b></button>`).join('');
-    document.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>enterZone(b.dataset.zone));
+    document.querySelectorAll('[data-zone]').forEach(b=>b.onclick=()=>isAerialHotspots()?openAerialZone(b.dataset.zone):enterZone(b.dataset.zone));
   }
-  function refreshPins(){document.querySelectorAll('[data-zone]').forEach(b=>{const id=b.dataset.zone;b.classList.toggle('route-done',route.includes(id));b.classList.toggle('route-next',id===nextRouteZone())})}
+  function refreshPins(){document.querySelectorAll('[data-zone]').forEach(b=>{const id=b.dataset.zone;b.classList.toggle('route-done',isAerialHotspots()?zoneCollected(id):route.includes(id));b.classList.toggle('route-next',id===nextRouteZone())})}
 
   function buildJournal(){
     const items=[];Object.entries(zones).forEach(([zoneId,z])=>z.scenes.forEach((s,i)=>{const done=visited.has(zoneId+':'+i);items.push(`<div class="journal-item ${done?'':'locked'}">${done?'<i class="journal-seal">泉</i>':'<i class="journal-seal">?</i>'}<b>${done?s.name:'待发现的风景'}</b><span>${z.name} · ${done?'已盖章':'沿路线继续寻找'}</span></div>`)}));
-    $('#journalGrid').innerHTML=items.join('');$('#journalSummary').textContent=visited.size?`已经收下 ${visited.size} 个城市组件`:'还没有收集城市组件';
+    const activeVisited=[...visited].filter(key=>zones[key.split(':')[0]]).length;
+    $('#journalGrid').innerHTML=items.join('');$('#journalSummary').textContent=activeVisited?`已经收下 ${activeVisited} 个城市组件`:'还没有收集城市组件';
+    $('#journalFinish').disabled=isAerialHotspots()&&!aerialRouteComplete();
+    $('#journalFinish').textContent=$('#journalFinish').disabled?'完成当前路线后生成':'生成纪念卡';
   }
 
   /* ---- postcard ---- */
@@ -296,6 +434,7 @@
       zones:uniqueZones.length,
       finds:finds.length,
       steps:Math.floor(player.steps),
+      chapter:activeChapter?.title||city.name,
       route:uniqueZones.map(id=>zones[id].name).join(' → ')
     };
     // caption band
@@ -329,7 +468,7 @@
 
   function drawTravelCard(){
     const card=$('#travelCard'),g=card.getContext('2d');
-    const uniqueZones=[...new Set(route)].filter(id=>zones[id]),finds=collectedSceneNames();
+    const uniqueZones=isAerialHotspots()?[...new Set([...visited].map(key=>key.split(':')[0]))].filter(id=>zones[id]):[...new Set(route)].filter(id=>zones[id]),finds=collectedSceneNames();
     g.clearRect(0,0,card.width,card.height);
     if(ticketImage.complete&&ticketImage.naturalWidth){
       g.drawImage(ticketImage,0,0,card.width,card.height);
@@ -341,18 +480,30 @@
     }
     drawRouteOnCard(g);
     drawCardOverlay(g,card,uniqueZones,finds);
-    $('#resultTitle').textContent=city.beadCollectibles?.length?`${playerName}，你的城市纪念物可以组装了`:fmt(city.ui.resultTitle,playerName);
+    const result=activeChapter?.result;
+    $('#resultKicker').textContent=result?.kicker||city.ui.resultKicker;
+    $('#resultTitle').textContent=result?.title?fmt(result.title,playerName):fmt(city.ui.resultTitle,playerName);
+    $('#resultDesc').textContent=result?.description||city.ui.resultDesc;
     $('#resultZones').textContent=uniqueZones.length;
     $('#resultFinds').textContent=finds.length;
     return card
   }
 
   function drawRouteOnCard(g){
+    if(isAerialHotspots())return;
     if(trail.length<2)return;const box={x:650,y:660,w:520,h:145},sx=box.w/WORLD.w,sy=box.h/WORLD.h;
     g.save();g.fillStyle='rgba(255,250,240,.86)';g.strokeStyle='#26352f';g.lineWidth=3;g.fillRect(box.x,box.y,box.w,box.h);g.strokeRect(box.x,box.y,box.w,box.h);g.beginPath();trail.forEach((p,i)=>{const x=box.x+p.x*sx,y=box.y+p.y*sy;i?g.lineTo(x,y):g.moveTo(x,y)});g.strokeStyle='#c24433';g.lineWidth=7;g.lineCap='round';g.lineJoin='round';g.stroke();const first=trail[0],end=trail.at(-1);[[first,'起'],[end,'终']].forEach(([p,t])=>{const x=box.x+p.x*sx,y=box.y+p.y*sy;g.fillStyle=t==='起'?'#75c6a3':'#f4c64f';g.beginPath();g.arc(x,y,13,0,Math.PI*2);g.fill();g.strokeStyle='#17241d';g.lineWidth=3;g.stroke();g.fillStyle='#17241d';g.font='900 15px sans-serif';g.textAlign='center';g.fillText(t,x,y+5)});g.restore()
   }
 
-  async function finishTrip(){keys.clear();saveProgress();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});$('#resultName').value=playerName==='旅行者'?'':playerName;drawTravelCard();updateBeadUnlockUI();$('#tripEnd').classList.add('open')}
+  async function finishTrip(){
+    if(isAerialHotspots()&&!aerialRouteComplete()){
+      $('#stampToast b').textContent='路线还没有完成';
+      $('#stampToast span').textContent=`下一处：${zones[nextRouteZone()]?.name||'再收藏一个地标'}`;
+      const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');
+      return
+    }
+    keys.clear();saveProgress();if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});$('#resultName').value=playerName==='旅行者'?'':playerName;drawTravelCard();updateBeadUnlockUI();$('#tripEnd').classList.add('open')
+  }
 
   /* ---- events ---- */
   function bindEvents(){
@@ -367,32 +518,37 @@
     mapViewport.addEventListener('pointercancel',endMapDrag);
     mapViewport.addEventListener('wheel',e=>{if(!overview.classList.contains('hidden')){e.preventDefault();setMapZoom(mapScale+(e.deltaY<0?.2:-.2))}},{passive:false});
 
-    addEventListener('keydown',e=>{if(onboarding.classList.contains('open'))return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){keys.add(k);player.target=null;e.preventDefault()}if(k==='e'&&nearScene!==null)openScene(nearScene)});
+    addEventListener('keydown',e=>{if(onboarding.classList.contains('open')||chapterHub.classList.contains('open')||isAerialHotspots())return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(k)){keys.add(k);player.target=null;e.preventDefault()}if(k==='e'&&nearScene!==null)openScene(nearScene)});
     addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
     addEventListener('blur',()=>keys.clear());
 
-    canvas.addEventListener('pointerdown',e=>{if(!currentZone)return;const r=canvas.getBoundingClientRect(),v=view(),worldX=v.x+(e.clientX-r.left)/camera.zoom,worldY=v.y+(e.clientY-r.top)/camera.zoom,touchRadius=(innerWidth<=850?56:34)/camera.zoom;let hit=null,min=Infinity;zones[currentZone].scenes.forEach((scene,index)=>{const distance=Math.hypot(worldX-scene.x,worldY-scene.y);if(distance<min){min=distance;hit=index}});if(hit!==null&&min<=touchRadius){player.target=null;openScene(hit);return}player.target={x:worldX,y:worldY};canvas.focus()});
+    canvas.addEventListener('pointerdown',e=>{if(isAerialHotspots()||!currentZone)return;const r=canvas.getBoundingClientRect(),v=view(),worldX=v.x+(e.clientX-r.left)/camera.zoom,worldY=v.y+(e.clientY-r.top)/camera.zoom,touchRadius=(innerWidth<=850?56:34)/camera.zoom;let hit=null,min=Infinity;zones[currentZone].scenes.forEach((scene,index)=>{const distance=Math.hypot(worldX-scene.x,worldY-scene.y);if(distance<min){min=distance;hit=index}});if(hit!==null&&min<=touchRadius){player.target=null;openScene(hit);return}player.target={x:worldX,y:worldY};canvas.focus()});
 
     document.querySelectorAll('.dpad button').forEach(b=>{const k=b.dataset.key;b.onpointerdown=e=>{e.preventDefault();keys.add(k);player.target=null};b.onpointerup=b.onpointercancel=b.onpointerleave=()=>keys.delete(k)});
 
-    function beginMapExperience(){onboarding.classList.remove('open');setTimeout(()=>{fit();resetMapView()},80)}
+    function beginMapExperience(){onboarding.classList.remove('open');renderChapterHub();chapterHub.classList.add('open');setTimeout(()=>{fit();resetMapView()},80)}
     $('#quickStart').onclick=beginMapExperience;$('#previewRoutes').onclick=beginMapExperience;
-    document.querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{selectedRoute=b.dataset.route;document.querySelectorAll('[data-route]').forEach(x=>x.classList.toggle('selected',x===b));const first=routePlan()[0];$('#startRoute').textContent=first?`从${zones[first].name}出发`:'选择一个地标出发';refreshPins()});
-    $('#startRoute').onclick=()=>{const first=routePlan()[0];if(first)enterZone(first)};
+    $('#startRoute').onclick=()=>{const first=isAerialHotspots()?(nextRouteZone()||routePlan()[0]):routePlan()[0];if(first)isAerialHotspots()?openAerialZone(first):enterZone(first)};
+
+    $('#openChapters').onclick=()=>{keys.clear();renderChapterHub();chapterHub.classList.add('open')};
+    $('#closeChapters').onclick=()=>chapterHub.classList.remove('open');
+    chapterHub.onclick=e=>{if(e.target===chapterHub&&activeChapter)chapterHub.classList.remove('open')};
 
     $('#back').onclick=showOverview;
     $('#finishTrip').onclick=finishTrip;
     $('#continueTrip').onclick=()=>$('#tripEnd').classList.remove('open');
     $('#tripEnd').onclick=e=>{if(e.target.id==='tripEnd')$('#tripEnd').classList.remove('open')};
-    $('#downloadCard').onclick=async()=>{if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});const card=drawTravelCard();card.toBlob(blob=>downloadBlob(blob,`${playerName.replace(/[\\/:*?"<>|]/g,'_')}-${city.postcard.downloadPrefix}.png`),'image/png')};
+    $('#downloadCard').onclick=async()=>{if(!ticketImage.complete)await ticketImage.decode().catch(()=>{});const card=drawTravelCard(),prefix=activeChapter?.downloadPrefix||city.postcard.downloadPrefix;card.toBlob(blob=>downloadBlob(blob,`${playerName.replace(/[\\/:*?"<>|]/g,'_')}-${prefix}.png`),'image/png')};
     $('#resultName').oninput=e=>{playerName=e.target.value.trim()||'旅行者';drawTravelCard();saveProgress()};
-    $('#shareCard').onclick=async()=>{const card=drawTravelCard(),blob=await new Promise(resolve=>card.toBlob(resolve,'image/png')),file=new File([blob],'我的泉城路线.png',{type:'image/png'});if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:'我的泉城像素路线',text:'我在像素济南散了个步',files:[file]}).catch(()=>{})}else{downloadBlob(blob,'我的泉城像素路线.png');navigator.clipboard?.writeText(location.href)}};
+    $('#shareCard').onclick=async()=>{const card=drawTravelCard(),blob=await new Promise(resolve=>card.toBlob(resolve,'image/png')),chapterName=activeChapter?.title||'泉城',file=new File([blob],`我的${chapterName}路线.png`,{type:'image/png'});if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:`我的${chapterName}像素路线`,text:`我在像素济南走完了${chapterName}`,files:[file]}).catch(()=>{})}else{downloadBlob(blob,`我的${chapterName}像素路线.png`);navigator.clipboard?.writeText(location.href)}};
     $('#look').onclick=()=>openScene(nearScene);
     $('#close').onclick=()=>$('#story').classList.remove('open');
     $('#story').onclick=e=>{if(e.target.id==='story')$('#story').classList.remove('open')};
     $('#collect').onclick=()=>{if(activeScene===null)return;const s=zones[currentZone].scenes[activeScene];visited.add(currentZone+':'+activeScene);$('#collect').textContent='✓ 已收下组件';$('#story').classList.remove('open');$('#stampToast b').textContent='已收下城市组件';$('#stampToast span').textContent=`${s.name} · ${zones[currentZone].name}`;const toast=$('#stampToast');toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');updateProductUI();buildJournal();saveProgress()};
     $('#openJournal').onclick=()=>{buildJournal();$('#journal').classList.add('open')};$('#closeJournal').onclick=()=>$('#journal').classList.remove('open');$('#journal').onclick=e=>{if(e.target.id==='journal')$('#journal').classList.remove('open')};$('#journalFinish').onclick=()=>{$('#journal').classList.remove('open');finishTrip()};
-    $('#makeBead').onclick=()=>{drawBeadPattern();$('#beadMaker').classList.add('open')};$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>{const item=city.beadCollectibles?.[0];$('#beadCanvas').toBlob(blob=>downloadBlob(blob,item?.downloadName||'城市地标-29x29-拼豆图纸.png'),'image/png')};
+    function openBeadGallery(){drawBeadGallery();drawBeadPattern(selectedBead);$('#beadMaker').classList.add('open')}
+    $('#openBeadGallery').onclick=openBeadGallery;
+    $('#makeBead').onclick=openBeadGallery;$('#closeBead').onclick=()=>$('#beadMaker').classList.remove('open');$('#beadMaker').onclick=e=>{if(e.target.id==='beadMaker')$('#beadMaker').classList.remove('open')};$('#downloadBead').onclick=()=>{const item=city.beadCollectibles?.[selectedBead];$('#beadCanvas').toBlob(blob=>downloadBlob(blob,item?.downloadName||'城市地标-29x29-拼豆图纸.png'),'image/png')};
 
     addEventListener('resize',()=>{fit();draw();applyMapTransform()});
 
@@ -401,11 +557,16 @@
   }
 
   function downloadBlob(blob,name){const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)}
-  function drawBeadPattern(){
-    const item=city.beadCollectibles?.[0];
+  function drawBeadGallery(){
+    const items=city.beadCollectibles||[];
+    $('#beadGallery').innerHTML=items.map((item,i)=>`<button type="button" data-bead="${i}" class="${i===selectedBead?'selected':''}"><span>${String(i+1).padStart(2,'0')}</span><b>${item.shortTitle||item.title}</b><small>${item.zoneId&&[...visited].some(key=>key.startsWith(item.zoneId+':'))?'已到访':'可制作'}</small></button>`).join('');
+    $('#beadGallery').querySelectorAll('[data-bead]').forEach(button=>button.onclick=()=>{selectedBead=Number(button.dataset.bead);drawBeadGallery();drawBeadPattern(selectedBead)});
+  }
+  function drawBeadPattern(index=selectedBead){
+    const item=city.beadCollectibles?.[index];
     if(!item)return;
-    const cols=item.width||item.size||29,rows=item.height||item.size||29,cell=20,palette=item.palette;
-    const grid=item.pattern.map(row=>[...row].map(Number));
+    const cols=item.width||item.size||29,rows=item.height||item.size||29,cell=Math.max(10,Math.min(20,Math.floor(760/cols))),palette=item.palette;
+    const grid=item.pattern.map(row=>Array.isArray(row)?row:[...row].map(value=>parseInt(value,36)));
     $('#beadKicker').textContent=item.unlockLabel;
     $('#beadTitle').textContent=item.title;
     $('#beadDesc').textContent=item.description;
@@ -415,14 +576,14 @@
     const c=$('#beadCanvas'),g=c.getContext('2d');c.width=cols*cell;c.height=rows*cell;g.clearRect(0,0,c.width,c.height);g.fillStyle=palette[0].color;g.fillRect(0,0,c.width,c.height);
     const counts=Array(palette.length).fill(0);
     grid.forEach((row,y)=>row.forEach((v,x)=>{
-      g.strokeStyle='rgba(23,36,29,.11)';g.strokeRect(x*cell,y*cell,cell,cell);
-      if(!v)return;counts[v]++;g.fillStyle=palette[v].color;g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,8.7,0,Math.PI*2);g.fill();g.strokeStyle='rgba(23,36,29,.32)';g.stroke();g.fillStyle=palette[0].color;g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,2.25,0,Math.PI*2);g.fill();
+      const filled=item.backgroundIsBead||v!==0;
+      if(filled){counts[v]++;g.fillStyle=palette[v].color;if(item.renderStyle==='tile'){g.fillRect(x*cell,y*cell,cell,cell)}else{g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,8.7,0,Math.PI*2);g.fill();g.strokeStyle='rgba(23,36,29,.32)';g.stroke();g.fillStyle=palette[0].color;g.beginPath();g.arc(x*cell+cell/2,y*cell+cell/2,2.25,0,Math.PI*2);g.fill()}}
+      g.strokeStyle='rgba(23,36,29,.16)';g.lineWidth=1;g.strokeRect(x*cell+.5,y*cell+.5,cell,cell);
     }));
-    if(cols>29){g.save();g.strokeStyle='rgba(194,68,51,.7)';g.lineWidth=3;g.setLineDash([10,8]);for(let x=29;x<cols;x+=29){g.beginPath();g.moveTo(x*cell,0);g.lineTo(x*cell,c.height);g.stroke()}g.restore()}
-    const used=counts.reduce((n,v,i)=>n+(i&&v?1:0),0),total=counts.reduce((n,v,i)=>n+(i?v:0),0);
+    const used=counts.reduce((n,v)=>n+(v?1:0),0),total=counts.reduce((n,v)=>n+v,0);
     $('#beadCount').textContent=total;$('#beadColorCount').textContent=used;
     $('#beadBoardCount').textContent=Math.ceil(cols/29)*Math.ceil(rows/29);
-    $('#beadLegend').innerHTML=palette.map((p,i)=>i&&counts[i]?`<span><i style="background:${p.color}"></i>${p.name} · ${counts[i]}</span>`:'').join('');
+    $('#beadLegend').innerHTML=palette.map((p,i)=>counts[i]?`<span><i style="background:${p.color}"></i>${p.name} · ${counts[i]}</span>`:'').join('');
   }
 
   /* ---- bootstrap ---- */
@@ -449,7 +610,7 @@
       $('#continueTrip').textContent=ui.continueTripLabel;
       $('#downloadCard').textContent='保存数字路线卡';
       $('#resultKicker').textContent='本次城市组件收集完成';
-      $('#resultDesc').textContent='路线决定你收集到哪些城市模块；完成指定组合后，可以下载一张能实际照着制作的拼豆图纸。';
+      $('#resultDesc').textContent='你走过的区域和收下的风景，会组合成这一章专属的像素明信片。';
       $('#statZonesLabel').textContent=ui.statZonesLabel;
       $('#statFindsLabel').textContent=ui.statFindsLabel;
       $('#promptLabel').textContent=ui.promptLabel;
@@ -467,23 +628,46 @@
         resetBtn.onclick=()=>{clearProgress();location.reload()};
       }
 
-      // restore saved progress: returning players skip onboarding
       const saved=loadProgress();
       if(saved){
         playerName=saved.name;
-        (saved.visited||[]).forEach(k=>typeof k==='string'&&visited.add(k));
-        (saved.route||[]).forEach(id=>{if(zones[id]&&route.at(-1)!==id)route.push(id)});
-        player.steps=saved.steps||0;
-        $('#playerGreeting').textContent=playerName+ui.greetingSuffix;
-        $('#mapWelcome').textContent=fmt(ui.mapWaitTitle,playerName);
+        if(!chapterCatalog||saved.v===2)(saved.visited||[]).forEach(k=>typeof k==='string'&&visited.add(k));
+      }
+
+      // Chapter-aware boot. city.json `chapters` and the standalone chapter
+      // catalog share the same runtime path; legacy city packs keep working.
+      if(chapterCatalog){
+        const requestedChapter=params.get('chapter');
+        const candidate=requestedChapter||saved?.chapterId;
+        const validCandidate=chapterById(candidate)?.status==='available';
+        const fallbackId=chapterById(chapterCatalog.defaultId)?.status==='available'?chapterCatalog.defaultId:chapterCatalog.items.find(item=>item.status==='available')?.id;
+        if(validCandidate||fallbackId)activateChapter(validCandidate?candidate:fallbackId,{silent:true,skipSave:true});
+        else{
+          zones=city.zones;waters=city.waters||[];WORLD=city.world;
+          renderRoutes();buildPins();
+        }
+      }else{
+        renderRoutes();buildPins();
+      }
+
+      if(saved){
+        if(!chapterCatalog||saved.v===2){
+          (saved.route||[]).forEach(id=>{if(zones[id]&&route.at(-1)!==id)route.push(id)});
+          player.steps=saved.steps||0;
+        }
         onboarding.classList.remove('open');
         if(resetBtn)resetBtn.hidden=false;
       }
 
-      buildPins();
       bindEvents();
       buildJournal();
       updateProductUI();
+      renderChapterHub();
+      if(params.has('chapter'))onboarding.classList.remove('open');
+      if(params.has('chapters')){
+        onboarding.classList.remove('open');
+        chapterHub.classList.add('open');
+      }
       if(saved){
         if(matchMedia('(max-width:850px) and (orientation:portrait)').matches)setMapZoom(1.5);
       }

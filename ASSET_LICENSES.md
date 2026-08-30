@@ -2,6 +2,36 @@
 
 顶层 `LICENSE` 仅适用于项目作者有权许可的原创源代码和明确标注的文档，不会自动覆盖本文件列出的素材。
 
+## 济南景点拼豆母版照片
+
+`assets/beads/pixel/` 中的十张低分辨率像素母版由 Wikimedia Commons 景点照片转换而来，仅用于生成拼豆图纸。原照片作者及具体 CC 许可请以对应文件页为准：
+
+- [趵突泉](https://commons.wikimedia.org/wiki/File:Baotu_Spring,_Jinan_in_Oct_2013.jpg)
+- [超然楼](https://commons.wikimedia.org/wiki/File:Chaoran_Tower,_Daming_Lake,_Jinan_in_October_2019.jpg)
+- [千佛山万佛洞](https://commons.wikimedia.org/wiki/File:Buddha_Grotto_Qianfo_Mountain.jpg)
+- [黑虎泉](https://commons.wikimedia.org/wiki/File:Black_tiger_spring.jpg)
+- [泉城广场泉标](https://commons.wikimedia.org/wiki/File:济南泉城广场泉标2019.jpg)
+- [曲水亭街](https://commons.wikimedia.org/wiki/File:曲水亭街.jpg)
+- [解放阁](https://commons.wikimedia.org/wiki/File:Jinan_Liberation_Pavilion_20191001.jpg)
+- [五龙潭水榭](https://commons.wikimedia.org/wiki/File:Five_dragon_pool_pavilion_2008_09.jpg)
+- [洪家楼教堂](https://commons.wikimedia.org/wiki/File:Sacred-Heart-Cathedral-Jinan.JPG)
+- [灵岩寺塔林](https://commons.wikimedia.org/wiki/File:Stupas_at_Lingyan_Si.jpg)
+
+正式版黑虎泉 87×87 图纸另使用济南市政府英文网站公开景点图，以确保三处出水口同框、主体可辨识：
+
+- 文件：`assets/beads/source/heihu-front.jpg`
+- 来源：[Jinan, a City of Springs](https://english.jinan.gov.cn/art/2018/12/4/art_29569_2729051.html)
+- 说明：该来源页面未在图片旁给出可复用许可，现阶段只作为内部产品样稿；项目正式开源发布前应替换成兼容许可证的同构图照片，或取得书面授权。
+
+## 济南真实地理底图
+
+- 原始数据：`cities/jinan/geo/jinan-core.osm`
+- 覆盖范围：117.003–117.032°E，36.654–36.679°N
+- 来源：[OpenStreetMap contributors](https://www.openstreetmap.org/copyright)
+- 许可：Open Data Commons Open Database License（ODbL）1.0
+- 处理方式：项目脚本 `scripts/build-real-jinan-map.py` 根据真实道路、水系、公园、建筑轮廓和地标经纬度确定性渲染；像素化仅改变视觉表现，不移动或虚构地理要素。
+- 署名要求：发布使用该数据生成的地图时保留 `© OpenStreetMap contributors` 及 ODbL 链接。
+
 ## 济南像素地图
 
 - 文件：`cities/jinan/map.png`

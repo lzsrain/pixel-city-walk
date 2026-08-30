@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Pixel City Walk 的济南示例：边走边收集城市模块，最后把泉城水脉做成一件拼豆纪念物。">
   <title>泉城漫游记 · 济南像素世界</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2343bdc2'/%3E%3Crect x='4' y='4' width='56' height='56' fill='none' stroke='%2317241d' stroke-width='6'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='38' font-family='sans-serif' font-weight='900' fill='%2317241d'%3E%E6%B3%89%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css?v=20260812-10">
 </head>
 <body>
   <main class="app">
@@ -20,6 +21,8 @@
           </div>
         </div>
         <div class="top-actions">
+          <button id="openChapters" hidden>济南城市册</button>
+          <button id="openBeadGallery" hidden>拼豆图鉴（重制中）</button>
           <button id="resetTrip" hidden>↺ 重新开始</button>
           <button id="back" hidden>◎ 返回世界地图</button>
           <button id="openJournal">收藏 <b id="journalCount">0</b>/<span id="journalTotal">0</span></button>
@@ -63,15 +66,7 @@
             <p id="mapWaitHint">先选一条路线，也可以随便逛。</p>
           </div>
           <div class="route-picker" aria-label="选择漫游路线">
-            <button class="route-card selected" data-route="first">
-              <span>水脉</span><b>泉从哪里来</b><small>趵突泉 → 泉城广场 → 黑虎泉 · 解锁水脉灯牌</small>
-            </button>
-            <button class="route-card" data-route="lake">
-              <span>湖城</span><b>水最后去了哪里</b><small>大明湖 → 老城 · 收集湖、桥、街屋模块</small>
-            </button>
-            <button class="route-card" data-route="free">
-              <span>自由</span><b>自己组一件</b><small>按到访顺序收集城市模块</small>
-            </button>
+            <div id="routeCards" class="route-cards"></div>
             <button id="startRoute" class="route-start">从趵突泉出发</button>
           </div>
           <div class="map-controls" aria-label="地图缩放">
@@ -85,6 +80,21 @@
     </section>
   </main>
 
+  <section id="chapterHub" class="chapter-hub" aria-modal="true" role="dialog" aria-labelledby="chapterHubTitle">
+    <div class="chapter-atlas">
+      <header class="chapter-atlas-head">
+        <div>
+          <small>PIXEL CITY WALK · JINAN CITY BOOK</small>
+          <h1 id="chapterHubTitle">选择一本济南城市篇章</h1>
+          <p>从泉、湖、商埠、山、黄河到新城。每完成一章，收下一张只属于这段路线的像素明信片。</p>
+        </div>
+        <button id="closeChapters" aria-label="关闭城市册">×</button>
+      </header>
+      <div id="chapterGrid" class="chapter-grid" aria-label="济南城市章节"></div>
+      <footer><span id="chapterStatusSummary">真实地图制作中 · 章节结构已就绪</span><b>南山 · 中泉 · 北河</b></footer>
+    </div>
+  </section>
+
   <section id="onboarding" class="onboarding open" aria-modal="true" role="dialog">
     <article class="launch-card">
       <div class="launch-map" aria-hidden="true"><div class="launch-sprite"></div><i></i><i></i><i></i></div>
@@ -92,8 +102,8 @@
         <small>PIXEL CITY WALK · JINAN</small>
         <h1>把济南走成<br>一条泉水</h1>
         <p>每到一站收下一块城市组件；走完以后，把南山、泉眼、护城河和大明湖拼成一座会透光的泉城。</p>
-        <button id="quickStart" class="primary" type="button">选一件想做的纪念物</button>
-        <button id="previewRoutes" class="text-button" type="button">先看看有哪些路线</button>
+        <button id="quickStart" class="primary" type="button">打开济南像素城市册</button>
+        <button id="previewRoutes" class="text-button" type="button">看看已开放的城市篇章</button>
       </div>
     </article>
   </section>
@@ -142,7 +152,7 @@
         <div class="result-actions">
           <button id="downloadCard" class="download">保存路线纪念卡</button>
           <button id="shareCard" class="share">分享这次漫游</button>
-          <button id="makeBead" class="bead">解锁地标拼豆</button>
+          <button id="makeBead" class="bead" hidden>地标拼豆重制中</button>
           <button id="continueTrip" class="continue">继续漫游</button>
         </div>
       </div>
@@ -162,13 +172,14 @@
   <section id="beadMaker" class="bead-maker" aria-modal="true" role="dialog">
     <article class="bead-panel">
       <button id="closeBead" class="bead-close" aria-label="关闭拼豆预览">×</button>
-      <div><small id="beadKicker">完成路线后解锁</small><h2 id="beadTitle">城市地标拼豆</h2><p id="beadDesc">每块底板只做一个能认出的城市对象。</p></div>
+      <div><small id="beadKicker">JINAN SCENIC BEAD COLLECTION</small><h2 id="beadTitle">济南景点拼豆图鉴</h2><p id="beadDesc">选择一处景点，查看实景照片像素化后的拼豆风景画。</p></div>
+      <div id="beadGallery" class="bead-gallery" aria-label="济南景点拼豆图鉴"></div>
       <canvas id="beadCanvas" width="580" height="580"></canvas>
       <div id="beadModules" class="bead-modules"></div>
       <div class="bead-stats"><span><b id="beadCount">0</b> 颗豆</span><span><b id="beadColorCount">0</b> 种颜色</span><span><b id="beadBoardCount">0</b> 块标准底板</span></div>
       <div id="beadLegend" class="bead-legend"></div>
       <button id="downloadBead" class="primary">下载地标拼豆图纸</button>
-      <p class="prototype-note">透明蓝豆用于水脉层；横向双板可加透明底座或灯带。品牌色号与熨烫分板说明待实体打样后锁定。</p>
+      <p class="prototype-note">当前为48×36或36×48实景图纸；每一格对应一颗豆。参考色需在实体打样时映射到具体拼豆品牌色号。</p>
     </article>
   </section>
 
@@ -861,6 +872,9 @@
   }
 } };
   </script>
-  <script src="js/engine.js?v=20260812-8"></script>
+  <!-- 章节配置与视觉资源解耦：同名图片落盘后无需再改引擎。 -->
+  <script src="cities/jinan/chapters.js?v=20260813-1"></script>
+  <!-- 拼豆图鉴因视觉质量不达标暂时下线，完成手绘像素母稿后再恢复。 -->
+  <script src="js/engine.js?v=20260813-1"></script>
 </body>
 </html>
