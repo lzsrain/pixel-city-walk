@@ -3,3 +3,9 @@ Thumbs.db
 .idea/
 .vscode/
 *.log
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+dist/
+build/
