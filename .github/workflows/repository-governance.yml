@@ -39,6 +39,7 @@ jobs:
             exit 1
           fi
           while IFS= read -r -d "" file; do
+            [ -f "$file" ] || continue
             size=$(wc -c < "$file")
             if [ "$size" -gt 52428800 ]; then
               echo "Tracked file exceeds 50 MiB: $file"
